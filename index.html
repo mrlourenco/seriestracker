@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Séries</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Acompanhamento pessoal</p>
+          <h1 id="page-title">Séries</h1>
+        </div>
+        <button class="primary-action" id="new-show-button" type="button">Adicionar série</button>
+      </section>
+
+      <section class="stats-grid" aria-label="Resumo">
+        <article class="stat">
+          <span class="stat-label">A ver</span>
+          <strong id="watching-count">0</strong>
+        </article>
+        <article class="stat">
+          <span class="stat-label">Em pausa</span>
+          <strong id="paused-count">0</strong>
+        </article>
+        <article class="stat">
+          <span class="stat-label">Quero ver</span>
+          <strong id="wishlist-count">0</strong>
+        </article>
+        <article class="stat">
+          <span class="stat-label">Terminadas</span>
+          <strong id="finished-count">0</strong>
+        </article>
+      </section>
+
+      <section class="controls" aria-label="Filtros">
+        <label class="search-field">
+          <span>Pesquisar</span>
+          <input id="search-input" type="search" placeholder="Título da série">
+        </label>
+
+        <label class="select-field">
+          <span>Estado</span>
+          <select id="status-filter">
+            <option value="all">Todas</option>
+            <option value="watching">A ver</option>
+            <option value="paused">Em pausa</option>
+            <option value="wishlist">Quero ver</option>
+            <option value="finished">Terminada</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="notification-panel" aria-live="polite">
+        <div>
+          <strong id="notification-title">Notificações</strong>
+          <p id="notification-status">Podes receber avisos enquanto esta app estiver aberta no browser.</p>
+        </div>
+        <button class="secondary-action" id="enable-notifications-button" type="button">Ativar avisos</button>
+      </section>
+
+      <section class="content-grid">
+        <form class="show-form" id="show-form" autocomplete="off">
+          <div class="form-header">
+            <h2 id="form-title">Nova série</h2>
+            <button class="ghost-action hidden" id="cancel-edit-button" type="button">Cancelar</button>
+          </div>
+
+          <input id="show-id" type="hidden">
+
+          <label>
+            <span>Título</span>
+            <input id="title-input" type="text" required placeholder="Ex.: The Bear">
+          </label>
+
+          <label>
+            <span>Estado</span>
+            <select id="status-input">
+              <option value="watching">A ver</option>
+              <option value="paused">Em pausa</option>
+              <option value="wishlist">Quero ver</option>
+              <option value="finished">Terminada</option>
+            </select>
+          </label>
+
+          <div class="number-row">
+            <label>
+              <span>Temporada</span>
+              <input id="season-input" type="number" min="0" max="99" value="1">
+            </label>
+            <label>
+              <span>Episódio</span>
+              <input id="episode-input" type="number" min="0" max="999" value="1">
+            </label>
+          </div>
+
+          <div class="number-row">
+            <label>
+              <span>Total temp.</span>
+              <input id="total-seasons-input" type="number" min="0" max="99" placeholder="Opcional">
+            </label>
+            <label>
+              <span>Nota</span>
+              <input id="rating-input" type="number" min="0" max="10" step="0.5" placeholder="0-10">
+            </label>
+          </div>
+
+          <div class="number-row">
+            <label>
+              <span>Próximo sai em</span>
+              <input id="next-air-date-input" type="date">
+            </label>
+            <label>
+              <span>Hora</span>
+              <input id="next-air-time-input" type="time" value="21:00">
+            </label>
+          </div>
+
+          <div class="number-row">
+            <label>
+              <span>Regularidade</span>
+              <select id="frequency-input">
+                <option value="none">Sem repetição</option>
+                <option value="daily">Diária</option>
+                <option value="weekly">Semanal</option>
+                <option value="biweekly">A cada 2 semanas</option>
+                <option value="monthly">Mensal</option>
+              </select>
+            </label>
+            <label>
+              <span>Avisar antes</span>
+              <select id="reminder-input">
+                <option value="0">Na hora</option>
+                <option value="15">15 min</option>
+                <option value="60">1 hora</option>
+                <option value="1440">1 dia</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="checkbox-field">
+            <input id="notifications-input" type="checkbox">
+            <span>Receber notificação deste episódio</span>
+          </label>
+
+          <label>
+            <span>Notas</span>
+            <textarea id="notes-input" rows="4" placeholder="Onde viste, opinião, com quem estás a ver..."></textarea>
+          </label>
+
+          <button class="primary-action full-width" type="submit">Guardar</button>
+        </form>
+
+        <section class="list-panel" aria-labelledby="list-title">
+          <div class="list-header">
+            <h2 id="list-title">A tua lista</h2>
+            <span id="result-count">0 séries</span>
+          </div>
+          <div class="show-list" id="show-list"></div>
+          <p class="empty-state hidden" id="empty-state">Ainda não há séries nesta vista.</p>
+        </section>
+      </section>
+    </main>
+
+    <template id="show-card-template">
+      <article class="show-card">
+        <div class="show-card-main">
+          <div>
+            <h3></h3>
+            <p class="show-progress"></p>
+          </div>
+          <span class="status-pill"></span>
+        </div>
+        <p class="show-notes"></p>
+        <p class="show-schedule"></p>
+        <div class="show-meta">
+          <span class="rating"></span>
+          <span class="updated"></span>
+        </div>
+        <div class="card-actions">
+          <button class="secondary-action next-episode" type="button">Vi este episódio</button>
+          <button class="ghost-action edit-show" type="button">Editar</button>
+          <button class="danger-action delete-show" type="button">Apagar</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
