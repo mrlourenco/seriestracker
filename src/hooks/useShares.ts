@@ -9,19 +9,27 @@ export function useShares() {
 
   const fetchShares = useCallback(async () => {
     setLoading(true)
-    const [{ data: owned }, { data: received }] = await Promise.all([
-      supabase
-        .from('profile_shares')
-        .select('*, viewer:profiles!profile_shares_viewer_id_fkey(*)')
-        .order('created_at'),
-      supabase
-        .from('profile_shares')
-        .select('*, owner:profiles!profile_shares_owner_id_fkey(*)')
-        .eq('viewer_id', (await supabase.auth.getUser()).data.user?.id ?? '')
-        .order('created_at'),
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id ?? ''
+
+    const [{ data: ownedRaw }, { data: receivedRaw }] = await Promise.all([
+      supabase.from('profile_shares').select('*').eq('owner_id', userId).order('created_at'),
+      supabase.from('profile_shares').select('*').eq('viewer_id', userId).order('created_at'),
     ])
-    setMyShares((owned ?? []) as (ProfileShare & { viewer: Profile })[])
-    setSharedWithMe((received ?? []) as (ProfileShare & { owner: Profile })[])
+
+    const profileIds = [
+      ...(ownedRaw ?? []).map(s => s.viewer_id),
+      ...(receivedRaw ?? []).map(s => s.owner_id),
+    ]
+
+    const { data: profiles } = profileIds.length > 0
+      ? await supabase.from('profiles').select('*').in('id', profileIds)
+      : { data: [] }
+
+    const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]))
+
+    setMyShares((ownedRaw ?? []).map(s => ({ ...s, viewer: profileMap[s.viewer_id] })) as (ProfileShare & { viewer: Profile })[])
+    setSharedWithMe((receivedRaw ?? []).map(s => ({ ...s, owner: profileMap[s.owner_id] })) as (ProfileShare & { owner: Profile })[])
     setLoading(false)
   }, [])
 
