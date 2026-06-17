@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useSeries } from '../hooks/useSeries'
+import { useAuth } from '../hooks/useAuth'
 import type { Series } from '../types'
 import { STATUS_LABELS, STATUS_COLORS } from '../types'
 
 export default function SeriesDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { getById, deleteSeries } = useSeries()
   const [series, setSeries] = useState<Series | null>(null)
   const [loading, setLoading] = useState(true)
@@ -100,12 +102,14 @@ export default function SeriesDetail() {
           <p className="text-slate-400 text-sm">{new Date(series.created_at).toLocaleDateString('pt-PT')}</p>
         </div>
 
-        <div className="flex gap-3">
-          <Link to={`/series/${series.id}/edit`} className="btn-primary flex-1 text-center">Editar</Link>
-          <button onClick={handleDelete} disabled={deleting} className="btn-danger">
-            {deleting ? '...' : 'Eliminar'}
-          </button>
-        </div>
+        {series.user_id === user?.id && (
+          <div className="flex gap-3">
+            <Link to={`/series/${series.id}/edit`} className="btn-primary flex-1 text-center">Editar</Link>
+            <button onClick={handleDelete} disabled={deleting} className="btn-danger">
+              {deleting ? '...' : 'Eliminar'}
+            </button>
+          </div>
+        )}
       </div>
     </Layout>
   )

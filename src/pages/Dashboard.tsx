@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
   const isOwnDashboard = viewingUserId === null
-  const { series, loading } = useSeries({ userId: viewingUserId ?? undefined })
+  const { series, loading } = useSeries({ userId: viewingUserId ?? user?.id ?? undefined })
 
   const watching = series.filter(s => s.status === 'watching')
   const wantToWatch = series.filter(s => s.status === 'want_to_watch')
