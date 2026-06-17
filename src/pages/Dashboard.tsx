@@ -8,12 +8,13 @@ import { useShares } from '../hooks/useShares'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const { sharedWithMe } = useShares()
   const [viewingUserId, setViewingUserId] = useState<string | null>(null)
 
   const isOwnDashboard = viewingUserId === null
-  const { series, loading } = useSeries({ userId: viewingUserId ?? user?.id ?? undefined })
+  const resolvedUserId = authLoading ? null : (viewingUserId ?? user?.id ?? null)
+  const { series, loading } = useSeries({ userId: resolvedUserId })
 
   const watching = series.filter(s => s.status === 'watching')
   const wantToWatch = series.filter(s => s.status === 'want_to_watch')

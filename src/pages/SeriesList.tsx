@@ -8,14 +8,14 @@ import { useAuth } from '../hooks/useAuth'
 import type { SeriesStatus, Platform } from '../types'
 
 export default function SeriesList() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [params] = useSearchParams()
   const [status, setStatus] = useState<SeriesStatus | ''>((params.get('status') as SeriesStatus) ?? '')
   const [platform, setPlatform] = useState<Platform | ''>('')
   const [search, setSearch] = useState('')
 
   const { series, loading, error } = useSeries({
-    userId: user?.id,
+    userId: authLoading ? null : user?.id,
     status: status || undefined,
     platform: platform || undefined,
     search: search || undefined,

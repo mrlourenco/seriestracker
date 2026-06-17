@@ -6,7 +6,7 @@ interface Filters {
   status?: SeriesStatus
   platform?: Platform
   search?: string
-  userId?: string
+  userId?: string | null  // null = auth not ready yet, skip fetch
 }
 
 export function useSeries(filters: Filters = {}) {
@@ -15,6 +15,7 @@ export function useSeries(filters: Filters = {}) {
   const [error, setError] = useState<string | null>(null)
 
   const fetchSeries = useCallback(async () => {
+    if (filters.userId === null) return  // auth not ready, keep loading state
     setLoading(true)
     setError(null)
     try {
