@@ -34,9 +34,11 @@ export function useShares() {
       .eq('email', viewerEmail.toLowerCase().trim())
       .single()
     if (profileError || !profile) throw new Error('Utilizador não encontrado com esse email')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Não autenticado')
     const { error } = await supabase
       .from('profile_shares')
-      .insert({ viewer_id: profile.id })
+      .insert({ owner_id: user.id, viewer_id: profile.id })
     if (error) throw new Error(error.code === '23505' ? 'Já partilhas com este utilizador' : error.message)
     await fetchShares()
   }
