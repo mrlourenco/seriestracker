@@ -6,6 +6,7 @@ interface Filters {
   status?: SeriesStatus
   platform?: Platform
   search?: string
+  userId?: string
 }
 
 export function useSeries(filters: Filters = {}) {
@@ -18,6 +19,7 @@ export function useSeries(filters: Filters = {}) {
     setError(null)
     try {
       let query = supabase.from('series').select('*').order('updated_at', { ascending: false })
+      if (filters.userId) query = query.eq('user_id', filters.userId)
       if (filters.status) query = query.eq('status', filters.status)
       if (filters.platform) query = query.eq('platform', filters.platform)
       if (filters.search) query = query.ilike('title', `%${filters.search}%`)
@@ -29,7 +31,7 @@ export function useSeries(filters: Filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [filters.status, filters.platform, filters.search])
+  }, [filters.userId, filters.status, filters.platform, filters.search])
 
   useEffect(() => { fetchSeries() }, [fetchSeries])
 

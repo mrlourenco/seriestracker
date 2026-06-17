@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import SeriesList from './pages/SeriesList'
 import SeriesDetail from './pages/SeriesDetail'
 import AddEditSeries from './pages/AddEditSeries'
+import Shares from './pages/Shares'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
       <Route path="/series/new" element={<ProtectedRoute><AddEditSeries /></ProtectedRoute>} />
       <Route path="/series/:id" element={<ProtectedRoute><SeriesDetail /></ProtectedRoute>} />
       <Route path="/series/:id/edit" element={<ProtectedRoute><AddEditSeries /></ProtectedRoute>} />
+      <Route path="/shares" element={<ProtectedRoute><Shares /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

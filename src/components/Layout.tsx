@@ -15,6 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { to: '/', label: 'Dashboard', icon: '🏠' },
     { to: '/series', label: 'Séries', icon: '📺' },
     { to: '/series/new', label: 'Adicionar', icon: '➕' },
+    { to: '/shares', label: 'Partilhas', icon: '👥' },
   ]
 
   return (
@@ -35,7 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <nav className="sticky bottom-0 bg-slate-900 border-t border-slate-800 grid grid-cols-3">
+      <nav className="sticky bottom-0 bg-slate-900 border-t border-slate-800 grid grid-cols-4">
         {navItems.map(({ to, label, icon }) => {
           const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to))
           return (
