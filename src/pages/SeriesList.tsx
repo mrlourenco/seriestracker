@@ -4,15 +4,18 @@ import Layout from '../components/Layout'
 import SeriesCard from '../components/SeriesCard'
 import FilterBar from '../components/FilterBar'
 import { useSeries } from '../hooks/useSeries'
+import { useAuth } from '../hooks/useAuth'
 import type { SeriesStatus, Platform } from '../types'
 
 export default function SeriesList() {
+  const { user } = useAuth()
   const [params] = useSearchParams()
   const [status, setStatus] = useState<SeriesStatus | ''>((params.get('status') as SeriesStatus) ?? '')
   const [platform, setPlatform] = useState<Platform | ''>('')
   const [search, setSearch] = useState('')
 
   const { series, loading, error } = useSeries({
+    userId: user?.id,
     status: status || undefined,
     platform: platform || undefined,
     search: search || undefined,
