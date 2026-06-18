@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import SeriesForm from '../components/SeriesForm'
 import { useSeries } from '../hooks/useSeries'
@@ -8,6 +8,8 @@ import type { Series, SeriesInsert } from '../types'
 export default function AddEditSeries() {
   const { id } = useParams<{ id?: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const prefill = (location.state as { prefill?: SeriesInsert } | null)?.prefill
   const { addSeries, updateSeries, getById } = useSeries()
   const [existing, setExisting] = useState<Series | undefined>()
   const [loading, setLoading] = useState(!!id)
@@ -44,7 +46,7 @@ export default function AddEditSeries() {
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-slate-100">{isEdit ? 'Editar série' : 'Nova série'}</h1>
         <SeriesForm
-          initial={existing}
+          initial={existing ?? prefill}
           onSubmit={handleSubmit}
           onCancel={() => navigate(isEdit ? `/series/${id}` : '/series')}
         />

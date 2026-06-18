@@ -1,0 +1,137 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Layout from '../components/Layout'
+import { useTMDB, TMDB_IMG } from '../hooks/useTMDB'
+import type { TMDBShow } from '../hooks/useTMDB'
+import type { Platform, SeriesInsert } from '../types'
+import { PLATFORMS } from '../types'
+
+const DISCOVERABLE = PLATFORMS.filter(p => p !== 'Outra')
+
+export default function Discover() {
+  const [platform, setPlatform] = useState<Platform>(DISCOVERABLE[0])
+  const { shows, loading, error } = useTMDB(platform)
+  const navigate = useNavigate()
+
+  function handleAdd(show: TMDBShow) {
+    const prefill: SeriesInsert = {
+      title: show.name,
+      poster_url: show.poster_path ? `${TMDB_IMG}/w500${show.poster_path}` : null,
+      platform,
+      status: 'want_to_watch',
+      current_season: null,
+      current_episode: null,
+      rating: null,
+      notes: null,
+      next_episode_date: null,
+      next_episode_season: null,
+      next_episode_number: null,
+      next_episode_title: null,
+    }
+    navigate('/series/new', { state: { prefill } })
+  }
+
+  return (
+    <Layout>
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Descobrir</h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Séries populares por plataforma ·{' '}
+            <a
+              href="https://www.themoviedb.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-400 hover:underline"
+            >
+              The Movie Database
+            </a>
+          </p>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {DISCOVERABLE.map(p => (
+            <button
+              key={p}
+              onClick={() => setPlatform(p)}
+              className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${
+                platform === p ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+
+        {loading && (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
+          </div>
+        )}
+
+        {error && (
+          <div className="card border-red-800 bg-red-950/30 space-y-1">
+            <p className="text-red-300 font-medium text-sm">Não foi possível carregar</p>
+            <p className="text-red-400 text-xs">{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="space-y-2">
+            <p className="text-xs text-slate-500">
+              Top <span className="text-slate-300 font-medium">{platform}</span> · ordenado por popularidade
+            </p>
+            {shows.map((show, i) => (
+              <div key={show.id} className="card flex gap-3 items-center">
+                <span className={`flex-shrink-0 w-6 text-center text-sm font-bold tabular-nums ${i < 3 ? 'text-brand-400' : 'text-slate-600'}`}>
+                  {i + 1}
+                </span>
+
+                <div className="flex-shrink-0 w-11 h-16 bg-slate-800 rounded-lg overflow-hidden">
+                  {show.poster_path ? (
+                    <img
+                      src={`${TMDB_IMG}/w185${show.poster_path}`}
+                      alt={show.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-lg">📺</div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-100 truncate text-sm">{show.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {show.first_air_date && (
+                      <span className="text-xs text-slate-500">{show.first_air_date.slice(0, 4)}</span>
+                    )}
+                    {show.vote_average > 0 && (
+                      <span className="text-xs text-yellow-400">⭐ {show.vote_average.toFixed(1)}</span>
+                    )}
+                  </div>
+                  {show.overview && (
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{show.overview}</p>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleAdd(show)}
+                  className="flex-shrink-0 btn-primary text-sm py-1.5 px-3"
+                  title={`Adicionar "${show.name}" à lista`}
+                >
+                  +
+                </button>
+              </div>
+            ))}
+
+            {shows.length === 0 && (
+              <div className="card text-center py-10">
+                <p className="text-slate-400">Nenhum resultado para {platform}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Layout>
+  )
+}

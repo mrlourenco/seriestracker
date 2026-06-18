@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { user, signOut } = useAuth()
+  const { user, loading, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -14,6 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { to: '/', label: 'Dashboard', icon: '🏠' },
     { to: '/series', label: 'Séries', icon: '📺' },
+    { to: '/discover', label: 'Descobrir', icon: '🔍' },
     { to: '/series/new', label: 'Adicionar', icon: '➕' },
     { to: '/shares', label: 'Partilhas', icon: '👥' },
   ]
@@ -23,12 +24,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
         <Link to="/" className="text-xl font-bold text-brand-400">📺 SeriesTracker</Link>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 hidden sm:block truncate max-w-[160px]">
-            {user?.email ?? user?.user_metadata?.name ?? ''}
-          </span>
-          <button onClick={handleSignOut} className="btn-secondary text-sm py-1.5 px-3">
-            Sair
-          </button>
+          {user && (
+            <span className="text-xs text-slate-400 hidden sm:block truncate max-w-[160px]">
+              {user.email ?? user.user_metadata?.name ?? ''}
+            </span>
+          )}
+          {!loading && (
+            user
+              ? <button onClick={handleSignOut} className="btn-secondary text-sm py-1.5 px-3">Sair</button>
+              : <Link to="/login" className="btn-primary text-sm py-1.5 px-3">Entrar</Link>
+          )}
         </div>
       </header>
 
@@ -36,7 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <nav className="sticky bottom-0 bg-slate-900 border-t border-slate-800 grid grid-cols-4">
+      <nav className="sticky bottom-0 bg-slate-900 border-t border-slate-800 grid grid-cols-5">
         {navItems.map(({ to, label, icon }) => {
           const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to))
           return (
