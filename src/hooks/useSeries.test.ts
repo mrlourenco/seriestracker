@@ -1,6 +1,7 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { useSeries } from './useSeries'
 import { createChain } from '../test/supabaseMock'
+import type { Series } from '../types'
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
@@ -46,6 +47,23 @@ describe('useSeries', () => {
       await act(async () => {})
       expect(result.current.loading).toBe(true)
       expect(supabase.from).not.toHaveBeenCalled()
+    })
+
+    it('does not call the API and stays loading when userIds is empty', async () => {
+      const { result } = renderHook(() => useSeries({ userIds: [] }))
+      await act(async () => {})
+      expect(result.current.loading).toBe(true)
+      expect(supabase.from).not.toHaveBeenCalled()
+    })
+
+    it('fetches series for multiple userIds using .in()', async () => {
+      const series = [makeSeries({ user_id: 'user-1' }), makeSeries({ id: '2', user_id: 'user-2' })]
+      const chain = createChain({ data: series, error: null })
+      vi.mocked(supabase.from).mockReturnValue(chain)
+      const { result } = renderHook(() => useSeries({ userIds: ['user-1', 'user-2'] }))
+      await waitFor(() => expect(result.current.loading).toBe(false))
+      expect(result.current.series).toEqual(series)
+      expect(chain.in).toHaveBeenCalledWith('user_id', ['user-1', 'user-2'])
     })
 
     it('fetches series for a given userId and sets state', async () => {
@@ -181,7 +199,7 @@ describe('useSeries', () => {
       const { result } = renderHook(() => useSeries({ userId: 'user-1' }))
       await waitFor(() => expect(result.current.loading).toBe(false))
 
-      let found: ReturnType<typeof makeSeries> | null = null
+      let found: Series | null = null
       await act(async () => { found = await result.current.getById('1') })
 
       expect(found).toEqual(series)

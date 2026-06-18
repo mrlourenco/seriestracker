@@ -4,9 +4,10 @@ import { STATUS_LABELS, STATUS_COLORS } from '../types'
 
 interface Props {
   series: Series
+  ownerName?: string
 }
 
-export default function SeriesCard({ series }: Props) {
+export default function SeriesCard({ series, ownerName }: Props) {
   return (
     <Link to={`/series/${series.id}`} className="card flex gap-3 hover:border-slate-600 transition-colors">
       <div className="flex-shrink-0 w-14 h-20 bg-slate-800 rounded-lg overflow-hidden">
@@ -24,6 +25,9 @@ export default function SeriesCard({ series }: Props) {
           </span>
           {series.platform && (
             <span className="badge bg-slate-700 text-slate-300">{series.platform}</span>
+          )}
+          {ownerName && (
+            <span className="badge bg-indigo-950 text-indigo-300 border border-indigo-800">{ownerName}</span>
           )}
         </div>
         <div className="mt-1.5 text-xs text-slate-400 space-y-0.5">

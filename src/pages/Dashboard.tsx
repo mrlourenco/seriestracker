@@ -6,23 +6,56 @@ import UpcomingEpisodes from '../components/UpcomingEpisodes'
 import { useSeries } from '../hooks/useSeries'
 import { useShares } from '../hooks/useShares'
 import { useAuth } from '../hooks/useAuth'
+import type { Series } from '../types'
+
+// viewMode: 'own' | 'all' | '<userId>'
+type ViewMode = string
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth()
   const { sharedWithMe } = useShares()
-  const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('own')
 
-  const isOwnDashboard = viewingUserId === null
-  const resolvedUserId = authLoading ? null : (viewingUserId ?? user?.id ?? null)
-  const { series, loading } = useSeries({ userId: resolvedUserId })
+  const isOwnDashboard = viewMode === 'own'
+  const isAllMode = viewMode === 'all'
+
+  // All user IDs relevant to this account (own + everyone who shared with me)
+  const allUserIds = [
+    ...(user?.id ? [user.id] : []),
+    ...sharedWithMe.map(s => s.owner_id),
+  ]
+
+  // Map userId → display name for owner tags in "Todos" mode
+  const ownerMap: Record<string, string> = {
+    ...(user?.id
+      ? { [user.id]: user?.user_metadata?.name ?? user?.email?.split('@')[0] ?? 'Eu' }
+      : {}),
+    ...Object.fromEntries(
+      sharedWithMe.map(s => [
+        s.owner_id,
+        s.owner.display_name ?? s.owner.email?.split('@')[0] ?? 'Utilizador',
+      ])
+    ),
+  }
+
+  const { series, loading } = useSeries(
+    isAllMode
+      ? { userIds: authLoading ? [] : allUserIds }
+      : { userId: authLoading ? null : (isOwnDashboard ? (user?.id ?? null) : viewMode) }
+  )
 
   const watching = series.filter(s => s.status === 'watching')
   const wantToWatch = series.filter(s => s.status === 'want_to_watch')
   const completed = series.filter(s => s.status === 'completed')
 
-  const viewingName = viewingUserId
-    ? (sharedWithMe.find(s => s.owner_id === viewingUserId)?.owner.display_name ?? 'Utilizador')
-    : (user?.user_metadata?.name ?? user?.email?.split('@')[0] ?? 'utilizador')
+  const viewingName = isOwnDashboard
+    ? (user?.user_metadata?.name ?? user?.email?.split('@')[0] ?? 'utilizador')
+    : (sharedWithMe.find(s => s.owner_id === viewMode)?.owner.display_name ?? 'Utilizador')
+
+  function cardOwner(s: Series): string | undefined {
+    if (!isAllMode) return undefined
+    return ownerMap[s.user_id]
+  }
 
   return (
     <Layout>
@@ -30,16 +63,22 @@ export default function Dashboard() {
         {sharedWithMe.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
-              onClick={() => setViewingUserId(null)}
+              onClick={() => setViewMode('own')}
               className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${isOwnDashboard ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
             >
               O meu
             </button>
+            <button
+              onClick={() => setViewMode('all')}
+              className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${isAllMode ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
+            >
+              Todos
+            </button>
             {sharedWithMe.map(s => (
               <button
                 key={s.id}
-                onClick={() => setViewingUserId(s.owner_id)}
-                className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${viewingUserId === s.owner_id ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
+                onClick={() => setViewMode(s.owner_id)}
+                className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${viewMode === s.owner_id ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
               >
                 {s.owner.display_name ?? s.owner.email?.split('@')[0]}
               </button>
@@ -49,11 +88,16 @@ export default function Dashboard() {
 
         <div>
           <h1 className="text-2xl font-bold text-slate-100">
-            {isOwnDashboard ? `Olá, ${viewingName} 👋` : `Dashboard de ${viewingName}`}
+            {isOwnDashboard
+              ? `Olá, ${viewingName} 👋`
+              : isAllMode
+              ? 'Vista geral'
+              : `Dashboard de ${viewingName}`}
           </h1>
           <p className="text-slate-400 mt-1">
             {series.length} {series.length === 1 ? 'série' : 'séries'} na lista
-            {!isOwnDashboard && <span className="ml-2 badge bg-slate-700 text-slate-400">Só leitura</span>}
+            {isAllMode && <span className="ml-2 badge bg-indigo-950 text-indigo-300 border border-indigo-800">Todos os utilizadores</span>}
+            {!isOwnDashboard && !isAllMode && <span className="ml-2 badge bg-slate-700 text-slate-400">Só leitura</span>}
           </p>
         </div>
 
@@ -80,13 +124,13 @@ export default function Dashboard() {
 
             {watching.length > 0 && (
               <Section title="A ver agora" count={watching.length} to={isOwnDashboard ? '/series?status=watching' : '#'}>
-                {watching.slice(0, 3).map(s => <SeriesCard key={s.id} series={s} />)}
+                {watching.slice(0, 3).map(s => <SeriesCard key={s.id} series={s} ownerName={cardOwner(s)} />)}
               </Section>
             )}
 
             {wantToWatch.length > 0 && (
               <Section title="Para ver" count={wantToWatch.length} to={isOwnDashboard ? '/series?status=want_to_watch' : '#'}>
-                {wantToWatch.slice(0, 3).map(s => <SeriesCard key={s.id} series={s} />)}
+                {wantToWatch.slice(0, 3).map(s => <SeriesCard key={s.id} series={s} ownerName={cardOwner(s)} />)}
               </Section>
             )}
 
@@ -98,7 +142,7 @@ export default function Dashboard() {
                 <Link to="/series/new" className="btn-primary inline-block mt-4">Adicionar série</Link>
               </div>
             )}
-            {series.length === 0 && !isOwnDashboard && (
+            {series.length === 0 && !isOwnDashboard && !isAllMode && (
               <div className="card text-center py-12">
                 <p className="text-4xl mb-3">📭</p>
                 <p className="text-slate-400">Esta pessoa ainda não tem séries.</p>

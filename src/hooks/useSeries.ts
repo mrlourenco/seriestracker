@@ -7,6 +7,7 @@ interface Filters {
   platform?: Platform
   search?: string
   userId?: string | null  // null = auth not ready yet, skip fetch
+  userIds?: string[]      // when set, fetches series for multiple users via .in()
 }
 
 export function useSeries(filters: Filters = {}) {
@@ -14,13 +15,24 @@ export function useSeries(filters: Filters = {}) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const userIdsKey = filters.userIds?.join(',')
+
   const fetchSeries = useCallback(async () => {
-    if (filters.userId === null) return  // auth not ready, keep loading state
+    // Auth not ready: userIds empty (all-mode waiting) or userId null (single-mode waiting)
+    if (filters.userIds !== undefined) {
+      if (filters.userIds.length === 0) return
+    } else {
+      if (filters.userId === null) return
+    }
     setLoading(true)
     setError(null)
     try {
       let query = supabase.from('series').select('*').order('updated_at', { ascending: false })
-      if (filters.userId) query = query.eq('user_id', filters.userId)
+      if (filters.userIds) {
+        query = query.in('user_id', filters.userIds)
+      } else if (filters.userId) {
+        query = query.eq('user_id', filters.userId)
+      }
       if (filters.status) query = query.eq('status', filters.status)
       if (filters.platform) query = query.eq('platform', filters.platform)
       if (filters.search) query = query.ilike('title', `%${filters.search}%`)
@@ -32,7 +44,8 @@ export function useSeries(filters: Filters = {}) {
     } finally {
       setLoading(false)
     }
-  }, [filters.userId, filters.status, filters.platform, filters.search])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.userId, filters.status, filters.platform, filters.search, userIdsKey])
 
   useEffect(() => { fetchSeries() }, [fetchSeries])
 
