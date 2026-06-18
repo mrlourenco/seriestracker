@@ -1,6 +1,7 @@
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { useSeries } from './useSeries'
 import { createChain } from '../test/supabaseMock'
+import type { Series } from '../types'
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
@@ -198,7 +199,7 @@ describe('useSeries', () => {
       const { result } = renderHook(() => useSeries({ userId: 'user-1' }))
       await waitFor(() => expect(result.current.loading).toBe(false))
 
-      let found: ReturnType<typeof makeSeries> | null = null
+      let found: Series | null = null
       await act(async () => { found = await result.current.getById('1') })
 
       expect(found).toEqual(series)

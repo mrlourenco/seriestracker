@@ -93,7 +93,7 @@ describe('useAuth', () => {
 
   it('calls subscription.unsubscribe on unmount', async () => {
     const { unmount } = renderHook(() => useAuth())
-    await waitFor(() => expect(result => result).toBeTruthy())
+    await act(async () => {})
     unmount()
     expect(mockSubscription.unsubscribe).toHaveBeenCalledTimes(1)
   })
