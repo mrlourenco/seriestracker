@@ -3,7 +3,7 @@ import type { Series, SeriesInsert, SeriesStatus, Platform } from '../types'
 import { STATUS_LABELS, STATUSES, PLATFORMS } from '../types'
 
 interface Props {
-  initial?: Series
+  initial?: Series | SeriesInsert
   onSubmit: (data: SeriesInsert) => Promise<void>
   onCancel: () => void
 }
@@ -23,7 +23,7 @@ const empty: SeriesInsert = {
   next_episode_title: null,
 }
 
-function toFormData(s: Series): SeriesInsert {
+function toFormData(s: Series | SeriesInsert): SeriesInsert {
   return {
     title: s.title,
     poster_url: s.poster_url,

@@ -14,6 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { to: '/', label: 'Dashboard', icon: '🏠' },
     { to: '/series', label: 'Séries', icon: '📺' },
+    { to: '/discover', label: 'Descobrir', icon: '🔍' },
     { to: '/series/new', label: 'Adicionar', icon: '➕' },
     { to: '/shares', label: 'Partilhas', icon: '👥' },
   ]
@@ -36,7 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <nav className="sticky bottom-0 bg-slate-900 border-t border-slate-800 grid grid-cols-4">
+      <nav className="sticky bottom-0 bg-slate-900 border-t border-slate-800 grid grid-cols-5">
         {navItems.map(({ to, label, icon }) => {
           const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to))
           return (
