@@ -63,16 +63,16 @@ export default function Dashboard() {
         {sharedWithMe.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
-              onClick={() => setViewMode('own')}
-              className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${isOwnDashboard ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
-            >
-              O meu
-            </button>
-            <button
               onClick={() => setViewMode('all')}
               className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${isAllMode ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
             >
               Todos
+            </button>
+            <button
+              onClick={() => setViewMode('own')}
+              className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${isOwnDashboard ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
+            >
+              O meu
             </button>
             {sharedWithMe.map(s => (
               <button
