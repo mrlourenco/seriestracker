@@ -73,7 +73,12 @@ export function useTMDB(platform: Platform, query = '') {
         return r.json() as Promise<{ results: TMDBShow[]; total_pages: number }>
       })
       .then(data => {
-        setShows(prev => page === 1 ? (data.results ?? []) : [...prev, ...(data.results ?? [])])
+        const incoming = data.results ?? []
+        setShows(prev => {
+          if (page === 1) return incoming
+          const existingIds = new Set(prev.map(s => s.id))
+          return [...prev, ...incoming.filter(s => !existingIds.has(s.id))]
+        })
         setTotalPages(data.total_pages ?? 1)
         setLoading(false)
       })
