@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useTMDB, TMDB_IMG } from '../hooks/useTMDB'
@@ -10,8 +10,17 @@ const DISCOVERABLE = PLATFORMS.filter(p => p !== 'Outra')
 
 export default function Discover() {
   const [platform, setPlatform] = useState<Platform>(DISCOVERABLE[0])
-  const { shows, loading, error } = useTMDB(platform)
+  const [searchInput, setSearchInput] = useState('')
+  const [query, setQuery] = useState('')
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { shows, loading, error, hasMore, loadMore } = useTMDB(platform, query)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setQuery(searchInput), 400)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [searchInput])
 
   function handleAdd(show: TMDBShow) {
     const prefill: SeriesInsert = {
@@ -31,13 +40,15 @@ export default function Discover() {
     navigate('/series/new', { state: { prefill } })
   }
 
+  const isSearching = query.trim().length > 0
+
   return (
     <Layout>
       <div className="space-y-5">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">Descobrir</h1>
           <p className="text-slate-400 text-sm mt-1">
-            Séries populares por plataforma ·{' '}
+            via{' '}
             <a
               href="https://www.themoviedb.org"
               target="_blank"
@@ -49,7 +60,15 @@ export default function Discover() {
           </p>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <input
+          type="search"
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
+          placeholder="Pesquisar séries..."
+          className="input w-full"
+        />
+
+        <div className={`flex gap-2 overflow-x-auto pb-1 transition-opacity ${isSearching ? 'opacity-40 pointer-events-none' : ''}`}>
           {DISCOVERABLE.map(p => (
             <button
               key={p}
@@ -63,7 +82,7 @@ export default function Discover() {
           ))}
         </div>
 
-        {loading && (
+        {loading && shows.length === 0 && (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
           </div>
@@ -76,11 +95,15 @@ export default function Discover() {
           </div>
         )}
 
-        {!loading && !error && (
+        {!error && (shows.length > 0 || (!loading)) && (
           <div className="space-y-2">
             <p className="text-xs text-slate-500">
-              Top <span className="text-slate-300 font-medium">{platform}</span> · ordenado por popularidade
+              {isSearching
+                ? <>Resultados para <span className="text-slate-300 font-medium">"{query}"</span> · pesquisa global</>
+                : <>Top <span className="text-slate-300 font-medium">{platform}</span> · disponível em Portugal · ordenado por popularidade</>
+              }
             </p>
+
             {shows.map((show, i) => (
               <div key={show.id} className="card flex gap-3 items-center">
                 <span className={`flex-shrink-0 w-6 text-center text-sm font-bold tabular-nums ${i < 3 ? 'text-brand-400' : 'text-slate-600'}`}>
@@ -124,10 +147,22 @@ export default function Discover() {
               </div>
             ))}
 
-            {shows.length === 0 && (
+            {shows.length === 0 && !loading && (
               <div className="card text-center py-10">
-                <p className="text-slate-400">Nenhum resultado para {platform}</p>
+                <p className="text-slate-400">
+                  {isSearching ? `Nenhum resultado para "${query}"` : `Nenhum resultado para ${platform}`}
+                </p>
               </div>
+            )}
+
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loading}
+                className="w-full btn-secondary py-2 text-sm mt-2"
+              >
+                {loading ? 'A carregar...' : 'Carregar mais'}
+              </button>
             )}
           </div>
         )}
