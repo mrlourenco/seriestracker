@@ -5,10 +5,8 @@ export function registerServiceWorker() {
     navigator.serviceWorker
       .register('/seriestracker/sw.js', { updateViaCache: 'none' })
       .then((registration) => {
-        // Force an immediate check for a new SW version on every page load
         registration.update()
 
-        // When a new SW has installed and is waiting, skip waiting immediately
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing
           if (!newWorker) return
@@ -24,8 +22,11 @@ export function registerServiceWorker() {
       })
   })
 
-  // Reload the page when the SW changes controller (new version took over)
+  // Guard against reload loops: only reload once per session
+  let reloading = false
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloading) return
+    reloading = true
     window.location.reload()
   })
 }
