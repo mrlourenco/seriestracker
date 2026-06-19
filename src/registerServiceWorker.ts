@@ -5,28 +5,11 @@ export function registerServiceWorker() {
     navigator.serviceWorker
       .register('/seriestracker/sw.js', { updateViaCache: 'none' })
       .then((registration) => {
+        // Check for a new SW version on every page load
         registration.update()
-
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing
-          if (!newWorker) return
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              newWorker.postMessage({ type: 'SKIP_WAITING' })
-            }
-          })
-        })
       })
       .catch((error) => {
         console.warn('Service worker registration failed:', error)
       })
-  })
-
-  // Guard against reload loops: only reload once per session
-  let reloading = false
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloading) return
-    reloading = true
-    window.location.reload()
   })
 }
