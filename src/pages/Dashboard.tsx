@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import { useSeries } from '../hooks/useSeries'
 import { useShares } from '../hooks/useShares'
@@ -56,7 +56,6 @@ export default function Dashboard() {
   const { sharedWithMe } = useShares()
   const [filter, setFilter] = useState<SeriesStatus>('watching')
   const [viewMode, setViewMode] = useState<ViewMode>('own')
-  const navigate = useNavigate()
 
   const isAllMode = viewMode === 'all'
   const isOwnDashboard = viewMode === 'own'
@@ -160,7 +159,7 @@ export default function Dashboard() {
         <>
           {/* HERO */}
           {filter === 'watching' && hero && (
-            <div style={{ margin: '14px 16px 0', position: 'relative', borderRadius: 20, overflow: 'hidden', height: 362 }}>
+            <Link to={`/series/${hero.id}`} style={{ display: 'block', margin: '14px 16px 0', position: 'relative', borderRadius: 20, overflow: 'hidden', height: 340, textDecoration: 'none' }}>
               {hero.poster_url ? (
                 <img
                   src={hero.poster_url}
@@ -200,23 +199,8 @@ export default function Dashboard() {
                 <div style={{ marginTop: 13, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.18)' }}>
                   <div style={{ height: '100%', width: progressPct(hero), background: '#E11D2A', borderRadius: 2, transition: 'width 0.4s ease' }} />
                 </div>
-                <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-                  <button
-                    onClick={() => navigate(`/series/${hero.id}`)}
-                    style={{ flex: 1, height: 46, border: 'none', borderRadius: 13, background: '#E11D2A', color: '#fff', font: "700 15px 'Hanken Grotesk'", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, cursor: 'pointer' }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>
-                    Continuar
-                  </button>
-                  <Link
-                    to="/series/new"
-                    style={{ width: 46, height: 46, borderRadius: 13, background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.18)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 6v12M6 12h12"/></svg>
-                  </Link>
-                </div>
               </div>
-            </div>
+            </Link>
           )}
 
           {/* HORIZONTAL RAIL */}
