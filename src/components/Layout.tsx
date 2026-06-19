@@ -41,6 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
 
   const handleSignOut = async () => {
+    if (!window.confirm('Tens a certeza que queres sair?')) return
     await signOut()
     navigate('/login')
   }
