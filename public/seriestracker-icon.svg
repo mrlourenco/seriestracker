@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SeriesTracker icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#202124"/>
+      <stop offset="0.55" stop-color="#09090b"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff3b3b"/>
+      <stop offset="1" stop-color="#d40000"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+    <filter id="redGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#ef1111" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <path d="M70 410C155 310 302 302 442 390" fill="none" stroke="#7f0000" stroke-width="70" opacity="0.18"/>
+  <rect x="36" y="36" width="440" height="440" rx="96" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="3"/>
+
+  <g filter="url(#shadow)">
+    <g filter="url(#redGlow)">
+      <path d="M164 130L214 184" stroke="url(#red)" stroke-width="34" stroke-linecap="round"/>
+      <path d="M348 130L298 184" stroke="url(#red)" stroke-width="34" stroke-linecap="round"/>
+      <rect x="126" y="176" width="260" height="168" rx="54" fill="none" stroke="url(#red)" stroke-width="32"/>
+    </g>
+    <path d="M232 226L232 294L294 260Z" fill="#ffffff"/>
+  </g>
+</svg>
