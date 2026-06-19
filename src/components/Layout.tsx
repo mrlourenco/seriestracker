@@ -1,8 +1,42 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
+const HomeIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5"/>
+  </svg>
+)
+const SeriesIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>
+  </svg>
+)
+const SearchIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-3.5-3.5"/>
+  </svg>
+)
+const PeopleIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3.5 20a5.5 5.5 0 0 1 11 0M17.5 11a3 3 0 0 0 0-6M20.5 20a5.5 5.5 0 0 0-3.6-5.2"/>
+  </svg>
+)
+const PlusIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+    <path d="M12 6v12M6 12h12"/>
+  </svg>
+)
+
+const TABS = [
+  { to: '/',           Icon: HomeIcon,   label: 'Início',    cta: false },
+  { to: '/series',     Icon: SeriesIcon, label: 'Séries',    cta: false },
+  { to: '/series/new', Icon: null,       label: '',          cta: true  },
+  { to: '/discover',   Icon: SearchIcon, label: 'Descobrir', cta: false },
+  { to: '/shares',     Icon: PeopleIcon, label: 'Partilhas', cta: false },
+]
+
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { user, loading, signOut } = useAuth()
+  const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -11,49 +45,75 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     navigate('/login')
   }
 
-  const navItems = [
-    { to: '/', label: 'Dashboard', icon: '🏠' },
-    { to: '/series', label: 'Séries', icon: '📺' },
-    { to: '/discover', label: 'Descobrir', icon: '🔍' },
-    { to: '/series/new', label: 'Adicionar', icon: '➕' },
-    { to: '/shares', label: 'Partilhas', icon: '👥' },
-  ]
+  const initial = ((user?.user_metadata?.name ?? user?.email ?? '?')[0] ?? '?').toUpperCase()
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-brand-400">📺 SeriesTracker</Link>
-        <div className="flex items-center gap-2">
-          {user && (
-            <span className="text-xs text-slate-400 hidden sm:block truncate max-w-[160px]">
-              {user.email ?? user.user_metadata?.name ?? ''}
-            </span>
-          )}
-          {!loading && (
-            user
-              ? <button onClick={handleSignOut} className="btn-secondary text-sm py-1.5 px-3">Sair</button>
-              : <Link to="/login" className="btn-primary text-sm py-1.5 px-3">Entrar</Link>
-          )}
-        </div>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0B0B0E' }}>
+      {/* Header */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 20,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '8px 18px',
+        background: 'rgba(11,11,14,0.94)',
+        backdropFilter: 'blur(14px)',
+        borderBottom: '1px solid #1b1b22',
+      }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
+          <span style={{ width: 9, height: 20, background: '#E11D2A', borderRadius: 2, display: 'inline-block', transform: 'skewX(-9deg)' }} />
+          <span style={{ font: "800 19px 'Hanken Grotesk'", color: '#fff', letterSpacing: '-0.01em' }}>SeriesTracker</span>
+        </Link>
+        <button
+          onClick={handleSignOut}
+          title="Sair"
+          style={{
+            width: 34, height: 34, borderRadius: '50%',
+            background: 'linear-gradient(135deg,#3f3f46,#18181b)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            font: "700 14px 'Hanken Grotesk'", color: '#e7e7ea',
+            border: '1px solid #2a2a31', cursor: 'pointer',
+          }}
+        >
+          {initial}
+        </button>
       </header>
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
+      {/* Main content */}
+      <main style={{ flex: 1, paddingBottom: 74 }}>
         {children}
       </main>
 
-      <nav className="sticky bottom-0 bg-slate-900 border-t border-slate-800 grid grid-cols-5">
-        {navItems.map(({ to, label, icon }) => {
-          const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to))
+      {/* Bottom tab bar */}
+      <nav style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
+        display: 'flex', alignItems: 'flex-start', paddingTop: 11,
+        height: 74,
+        background: 'rgba(11,11,14,0.94)',
+        backdropFilter: 'blur(14px)',
+        borderTop: '1px solid #1b1b22',
+      }}>
+        {TABS.map(({ to, Icon, label, cta }) => {
+          const exact = to === '/'
+          const active = exact
+            ? location.pathname === '/'
+            : location.pathname.startsWith(to)
+          const color = active ? '#E11D2A' : '#6b6b73'
+
           return (
             <Link
               key={to}
               to={to}
-              className={`flex flex-col items-center py-3 text-xs gap-1 transition-colors ${
-                active ? 'text-brand-400' : 'text-slate-400 hover:text-slate-200'
-              }`}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, textDecoration: 'none' }}
             >
-              <span className="text-xl">{icon}</span>
-              {label}
+              {cta ? (
+                <div style={{ width: 46, height: 34, borderRadius: 11, background: '#E11D2A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <PlusIcon />
+                </div>
+              ) : Icon ? (
+                <>
+                  <span style={{ color }}><Icon /></span>
+                  <span style={{ font: "600 10px 'Hanken Grotesk'", color }}>{label}</span>
+                </>
+              ) : null}
             </Link>
           )
         })}

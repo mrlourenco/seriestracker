@@ -1,42 +1,70 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
-import SeriesCard from '../components/SeriesCard'
-import UpcomingEpisodes from '../components/UpcomingEpisodes'
 import { useSeries } from '../hooks/useSeries'
 import { useShares } from '../hooks/useShares'
 import { useAuth } from '../hooks/useAuth'
-import type { Series } from '../types'
+import type { Series, SeriesStatus } from '../types'
 
-// viewMode: 'own' | 'all' | '<userId>'
+const GRADIENTS = [
+  'linear-gradient(150deg,#7f1d1d 0%,#dc2626 100%)',
+  'linear-gradient(150deg,#0c4a6e 0%,#0891b2 100%)',
+  'linear-gradient(150deg,#082f49 0%,#2563eb 100%)',
+  'linear-gradient(150deg,#422006 0%,#d97706 100%)',
+  'linear-gradient(150deg,#1e1b4b 0%,#4f46e5 100%)',
+  'linear-gradient(150deg,#14532d 0%,#16a34a 100%)',
+  'linear-gradient(150deg,#4a044e 0%,#c026d3 100%)',
+  'linear-gradient(150deg,#18181b 0%,#52525b 100%)',
+]
+
+function seriesGradient(s: Series) {
+  return GRADIENTS[(s.title.charCodeAt(0) ?? 0) % GRADIENTS.length]
+}
+
+function progressPct(s: Series) {
+  if (!s.current_episode) return '0%'
+  return `${Math.min(Math.round((s.current_episode / 13) * 100), 99)}%`
+}
+
+function seasonEpLabel(s: Series) {
+  if (!s.current_season && !s.current_episode) return null
+  const parts = []
+  if (s.current_season) parts.push(`T${s.current_season}`)
+  if (s.current_episode) parts.push(`E${s.current_episode}`)
+  return parts.join(' · ')
+}
+
+const STATUS_DOT: Record<SeriesStatus, string> = {
+  watching:      '#34d399',
+  want_to_watch: '#fbbf24',
+  completed:     '#60a5fa',
+  dropped:       '#f87171',
+  archived:      '#71717a',
+}
+
+const PILLS: { key: SeriesStatus; label: string }[] = [
+  { key: 'watching',      label: 'A ver' },
+  { key: 'want_to_watch', label: 'Para ver' },
+  { key: 'completed',     label: 'Terminadas' },
+  { key: 'archived',      label: 'Arquivo' },
+]
+
 type ViewMode = string
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth()
   const { sharedWithMe } = useShares()
+  const [filter, setFilter] = useState<SeriesStatus>('watching')
   const [viewMode, setViewMode] = useState<ViewMode>('own')
+  const navigate = useNavigate()
 
-  const isOwnDashboard = viewMode === 'own'
   const isAllMode = viewMode === 'all'
+  const isOwnDashboard = viewMode === 'own'
 
-  // All user IDs relevant to this account (own + everyone who shared with me)
   const allUserIds = [
     ...(user?.id ? [user.id] : []),
     ...sharedWithMe.map(s => s.owner_id),
   ]
-
-  // Map userId → display name for owner tags in "Todos" mode
-  const ownerMap: Record<string, string> = {
-    ...(user?.id
-      ? { [user.id]: user?.user_metadata?.name ?? user?.email?.split('@')[0] ?? 'Eu' }
-      : {}),
-    ...Object.fromEntries(
-      sharedWithMe.map(s => [
-        s.owner_id,
-        s.owner.display_name ?? s.owner.email?.split('@')[0] ?? 'Utilizador',
-      ])
-    ),
-  }
 
   const { series, loading } = useSeries(
     isAllMode
@@ -44,125 +72,234 @@ export default function Dashboard() {
       : { userId: authLoading ? null : (isOwnDashboard ? (user?.id ?? null) : viewMode) }
   )
 
-  const watching = series.filter(s => s.status === 'watching')
-  const wantToWatch = series.filter(s => s.status === 'want_to_watch')
-  const completed = series.filter(s => s.status === 'completed')
-
-  const viewingName = isOwnDashboard
-    ? (user?.user_metadata?.name ?? user?.email?.split('@')[0] ?? 'utilizador')
-    : (sharedWithMe.find(s => s.owner_id === viewMode)?.owner.display_name ?? 'Utilizador')
-
-  function cardOwner(s: Series): string | undefined {
-    if (!isAllMode) return undefined
-    return ownerMap[s.user_id]
-  }
+  const watching     = series.filter(s => s.status === 'watching')
+  const filteredList = series.filter(s => s.status === filter)
+  const hero         = watching[0] ?? null
 
   return (
     <Layout>
-      <div className="space-y-6">
-        {sharedWithMe.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
+      {/* Shares view switcher */}
+      {sharedWithMe.length > 0 && (
+        <div className="noscroll" style={{ display: 'flex', gap: 8, padding: '14px 18px 0', overflowX: 'auto' }}>
+          <button
+            onClick={() => setViewMode('own')}
+            style={{
+              flexShrink: 0,
+              background: isOwnDashboard ? '#E11D2A' : '#16161b',
+              color: isOwnDashboard ? '#fff' : '#b4b4bd',
+              font: "600 12px 'Hanken Grotesk'",
+              padding: '6px 13px', borderRadius: 999,
+              border: isOwnDashboard ? 'none' : '1px solid #26262e',
+              cursor: 'pointer',
+            }}
+          >
+            O meu
+          </button>
+          <button
+            onClick={() => setViewMode('all')}
+            style={{
+              flexShrink: 0,
+              background: isAllMode ? '#E11D2A' : '#16161b',
+              color: isAllMode ? '#fff' : '#b4b4bd',
+              font: "600 12px 'Hanken Grotesk'",
+              padding: '6px 13px', borderRadius: 999,
+              border: isAllMode ? 'none' : '1px solid #26262e',
+              cursor: 'pointer',
+            }}
+          >
+            Todos
+          </button>
+          {sharedWithMe.map(s => (
             <button
-              onClick={() => setViewMode('all')}
-              className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${isAllMode ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
+              key={s.id}
+              onClick={() => setViewMode(s.owner_id)}
+              style={{
+                flexShrink: 0,
+                background: viewMode === s.owner_id ? '#E11D2A' : '#16161b',
+                color: viewMode === s.owner_id ? '#fff' : '#b4b4bd',
+                font: "600 12px 'Hanken Grotesk'",
+                padding: '6px 13px', borderRadius: 999,
+                border: viewMode === s.owner_id ? 'none' : '1px solid #26262e',
+                cursor: 'pointer',
+              }}
             >
-              Todos
+              {s.owner.display_name ?? s.owner.email?.split('@')[0]}
             </button>
-            <button
-              onClick={() => setViewMode('own')}
-              className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${isOwnDashboard ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
-            >
-              O meu
-            </button>
-            {sharedWithMe.map(s => (
-              <button
-                key={s.id}
-                onClick={() => setViewMode(s.owner_id)}
-                className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${viewMode === s.owner_id ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
-              >
-                {s.owner.display_name ?? s.owner.email?.split('@')[0]}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100">
-            {isOwnDashboard
-              ? `Olá, ${viewingName} 👋`
-              : isAllMode
-              ? 'Vista geral'
-              : `Dashboard de ${viewingName}`}
-          </h1>
-          <p className="text-slate-400 mt-1">
-            {series.length} {series.length === 1 ? 'série' : 'séries'} na lista
-            {isAllMode && <span className="ml-2 badge bg-indigo-950 text-indigo-300 border border-indigo-800">Todos os utilizadores</span>}
-            {!isOwnDashboard && !isAllMode && <span className="ml-2 badge bg-slate-700 text-slate-400">Só leitura</span>}
-          </p>
+          ))}
         </div>
+      )}
 
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'A ver', count: watching.length, color: 'text-green-400' },
-                { label: 'Para ver', count: wantToWatch.length, color: 'text-yellow-400' },
-                { label: 'Terminadas', count: completed.length, color: 'text-blue-400' },
-              ].map(({ label, count, color }) => (
-                <div key={label} className="card text-center">
-                  <p className={`text-2xl font-bold ${color}`}>{count}</p>
-                  <p className="text-xs text-slate-400 mt-1">{label}</p>
+      {/* Filter pills */}
+      <div className="noscroll" style={{ display: 'flex', gap: 8, padding: '16px 18px 4px', overflowX: 'auto' }}>
+        {PILLS.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setFilter(key)}
+            style={{
+              flexShrink: 0,
+              background: filter === key ? '#E11D2A' : '#16161b',
+              color:      filter === key ? '#fff'    : '#b4b4bd',
+              font: "600 13px 'Hanken Grotesk'",
+              padding: '8px 15px',
+              borderRadius: 999,
+              border: filter === key ? 'none' : '1px solid #26262e',
+              cursor: 'pointer',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        </div>
+      ) : (
+        <>
+          {/* HERO */}
+          {filter === 'watching' && hero && (
+            <div style={{ margin: '14px 16px 0', position: 'relative', borderRadius: 20, overflow: 'hidden', height: 362 }}>
+              {hero.poster_url ? (
+                <img
+                  src={hero.poster_url}
+                  alt={hero.title}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <div style={{ position: 'absolute', inset: 0, background: seriesGradient(hero) }} />
+              )}
+              <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(130% 90% at 72% 18%, rgba(255,255,255,.20), transparent 58%)' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11,11,14,.97) 7%, rgba(11,11,14,.25) 48%, transparent 72%)' }} />
+              <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(0,0,0,.42)', padding: '6px 11px', borderRadius: 999 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34d399', display: 'inline-block' }} />
+                <span style={{ font: "700 11px 'Hanken Grotesk'", color: '#e7e7ea', letterSpacing: '.06em' }}>A VER AGORA</span>
+              </div>
+              <div style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
+                {hero.platform && (
+                  <div style={{ font: "600 11px 'Hanken Grotesk'", color: '#cfcfd6', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                    {hero.platform}
+                  </div>
+                )}
+                <div style={{ font: "800 31px/1.04 'Hanken Grotesk'", color: '#fff', letterSpacing: '-.025em', marginTop: 7 }}>
+                  {hero.title}
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 11 }}>
+                  {hero.platform && (
+                    <span style={{ background: 'rgba(255,255,255,.14)', color: '#e7e7ea', font: "600 11px 'Hanken Grotesk'", padding: '4px 9px', borderRadius: 6 }}>
+                      {hero.platform}
+                    </span>
+                  )}
+                  {seasonEpLabel(hero) && (
+                    <span style={{ font: "600 13px 'Hanken Grotesk'", color: '#d7d7dd' }}>
+                      {seasonEpLabel(hero)}
+                    </span>
+                  )}
+                </div>
+                <div style={{ marginTop: 13, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.18)' }}>
+                  <div style={{ height: '100%', width: progressPct(hero), background: '#E11D2A', borderRadius: 2, transition: 'width 0.4s ease' }} />
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                  <button
+                    onClick={() => navigate(`/series/${hero.id}`)}
+                    style={{ flex: 1, height: 46, border: 'none', borderRadius: 13, background: '#E11D2A', color: '#fff', font: "700 15px 'Hanken Grotesk'", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, cursor: 'pointer' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>
+                    Continuar
+                  </button>
+                  <Link
+                    to="/series/new"
+                    style={{ width: 46, height: 46, borderRadius: 13, background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.18)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 6v12M6 12h12"/></svg>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* HORIZONTAL RAIL */}
+          {filter === 'watching' && watching.length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '0 18px' }}>
+                <span style={{ font: "700 16px 'Hanken Grotesk'", color: '#f3f3f5' }}>Continuar a ver</span>
+                <Link to="/series?status=watching" style={{ font: "600 12px 'Hanken Grotesk'", color: '#E11D2A', textDecoration: 'none' }}>Ver tudo</Link>
+              </div>
+              <div className="noscroll" style={{ display: 'flex', gap: 12, padding: '13px 18px 20px', overflowX: 'auto' }}>
+                {watching.map(s => (
+                  <Link key={s.id} to={`/series/${s.id}`} style={{ flexShrink: 0, width: 118, textDecoration: 'none' }}>
+                    <div style={{ position: 'relative', width: 118, height: 177, borderRadius: 12, overflow: 'hidden' }}>
+                      {s.poster_url ? (
+                        <img src={s.poster_url} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s) }} />
+                      )}
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.85) 4%, transparent 46%)' }} />
+                      <div style={{ position: 'absolute', left: 9, right: 9, bottom: 16, font: "700 13px/1.1 'Hanken Grotesk'", color: '#fff' }}>
+                        {s.title}
+                      </div>
+                      <div style={{ position: 'absolute', left: 9, right: 9, bottom: 8, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.28)' }}>
+                        <div style={{ height: '100%', width: progressPct(s), background: '#E11D2A', borderRadius: 2 }} />
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 8, font: "500 11px 'Hanken Grotesk'", color: '#8a8a95' }}>
+                      {seasonEpLabel(s)}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* EMPTY STATE – watching */}
+          {filter === 'watching' && watching.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '64px 20px' }}>
+              <p style={{ font: "500 15px 'Hanken Grotesk'", color: '#6b6b73', marginBottom: 16 }}>Nenhuma série a ver agora</p>
+              <Link
+                to="/series/new"
+                style={{ display: 'inline-block', background: '#E11D2A', color: '#fff', font: "700 14px 'Hanken Grotesk'", padding: '10px 22px', borderRadius: 13, textDecoration: 'none' }}
+              >
+                Adicionar série
+              </Link>
+            </div>
+          )}
+
+          {/* LIST VIEW */}
+          {filter !== 'watching' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '16px 16px 20px' }}>
+              {filteredList.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                  <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73' }}>Nenhuma série aqui</p>
+                </div>
+              ) : filteredList.map(s => (
+                <Link
+                  key={s.id}
+                  to={`/series/${s.id}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 13px', borderRadius: 15, background: '#131318', border: '1px solid #20202a', textDecoration: 'none' }}
+                >
+                  <div style={{ flexShrink: 0, width: 42, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                    {s.poster_url ? (
+                      <img src={s.poster_url} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s) }} />
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {s.title}
+                    </div>
+                    <div style={{ font: "500 12px 'Hanken Grotesk'", color: '#8a8a95', marginTop: 3 }}>
+                      {[s.platform, seasonEpLabel(s)].filter(Boolean).join(' · ')}
+                    </div>
+                  </div>
+                  <span style={{ flexShrink: 0, width: 8, height: 8, borderRadius: '50%', background: STATUS_DOT[s.status] }} />
+                </Link>
               ))}
             </div>
-
-            <UpcomingEpisodes series={series} />
-
-            {watching.length > 0 && (
-              <Section title="A ver agora" count={watching.length} to={isOwnDashboard ? '/series?status=watching' : '#'}>
-                {watching.slice(0, 3).map(s => <SeriesCard key={s.id} series={s} ownerName={cardOwner(s)} />)}
-              </Section>
-            )}
-
-            {wantToWatch.length > 0 && (
-              <Section title="Para ver" count={wantToWatch.length} to={isOwnDashboard ? '/series?status=want_to_watch' : '#'}>
-                {wantToWatch.slice(0, 3).map(s => <SeriesCard key={s.id} series={s} ownerName={cardOwner(s)} />)}
-              </Section>
-            )}
-
-            {series.length === 0 && isOwnDashboard && (
-              <div className="card text-center py-12">
-                <p className="text-4xl mb-3">📭</p>
-                <p className="text-slate-300 font-medium">Nenhuma série ainda</p>
-                <p className="text-slate-500 text-sm mt-1">Adiciona a tua primeira série</p>
-                <Link to="/series/new" className="btn-primary inline-block mt-4">Adicionar série</Link>
-              </div>
-            )}
-            {series.length === 0 && !isOwnDashboard && !isAllMode && (
-              <div className="card text-center py-12">
-                <p className="text-4xl mb-3">📭</p>
-                <p className="text-slate-400">Esta pessoa ainda não tem séries.</p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          )}
+        </>
+      )}
     </Layout>
-  )
-}
-
-function Section({ title, count, to, children }: { title: string; count: number; to: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-slate-200">{title} <span className="text-slate-500 text-sm">({count})</span></h2>
-        {to !== '#' && <Link to={to} className="text-sm text-brand-400 hover:text-brand-300">Ver todas</Link>}
-      </div>
-      {children}
-    </div>
   )
 }
