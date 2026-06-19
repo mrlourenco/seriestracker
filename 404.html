@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>SeriesTracker</title>
+    <script>
+      var path = window.location.pathname
+      var repo = '/seriestracker'
+      var relativePath = path.startsWith(repo) ? path.slice(repo.length) : path
+      window.location.replace(repo + '/?/' + relativePath.replace(/^\//, '') + window.location.search.replace(/&/g, '~and~') + window.location.hash)
+    </script>
+  </head>
+  <body></body>
+</html>
