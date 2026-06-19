@@ -60,7 +60,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
           <span style={{ width: 9, height: 20, background: '#E11D2A', borderRadius: 2, display: 'inline-block', transform: 'skewX(-9deg)' }} />
-          <span style={{ font: "800 19px 'Hanken Grotesk'", color: '#fff', letterSpacing: '-0.01em' }}>SeriesTracker</span>
+          <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <span style={{ font: "800 19px 'Hanken Grotesk'", color: '#fff', letterSpacing: '-0.01em', lineHeight: 1 }}>SeriesTracker</span>
+            <span style={{ font: "500 9px 'Hanken Grotesk'", color: '#4a4a55', letterSpacing: '.04em', lineHeight: 1 }}>
+              v{__APP_VERSION__} · {__GIT_HASH__}
+            </span>
+          </span>
         </Link>
         <button
           onClick={handleSignOut}
