@@ -1,0 +1,19 @@
+{
+  "name": "SeriesTracker",
+  "short_name": "SeriesTracker",
+  "description": "Aplicação pessoal para gerir séries vistas, a ver e por ver.",
+  "start_url": "/seriestracker/",
+  "scope": "/seriestracker/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0c4a6e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/seriestracker/tv.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
