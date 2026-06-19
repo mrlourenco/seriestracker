@@ -1,8 +1,10 @@
-const CACHE_NAME = 'seriestracker-v1'
+const CACHE_NAME = 'seriestracker-v2'
 const APP_SHELL = [
   '/seriestracker/',
   '/seriestracker/index.html',
-  '/seriestracker/tv.svg',
+  '/seriestracker/icon-192.png',
+  '/seriestracker/icon-512.png',
+  '/seriestracker/icon-maskable-512.png',
   '/seriestracker/manifest.webmanifest'
 ]
 
