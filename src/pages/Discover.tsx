@@ -12,6 +12,7 @@ export default function Discover() {
   const [platform, setPlatform] = useState<Platform>(DISCOVERABLE[0])
   const [searchInput, setSearchInput] = useState('')
   const [query, setQuery] = useState('')
+  const [expandedShowId, setExpandedShowId] = useState<number | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { shows, loading, error, hasMore, loadMore } = useTMDB(platform, query)
   const navigate = useNavigate()
@@ -21,6 +22,10 @@ export default function Discover() {
     debounceRef.current = setTimeout(() => setQuery(searchInput), 400)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [searchInput])
+
+  useEffect(() => {
+    setExpandedShowId(null)
+  }, [query, platform])
 
   function handleAdd(show: TMDBShow) {
     const prefill: SeriesInsert = {
@@ -104,48 +109,74 @@ export default function Discover() {
               }
             </p>
 
-            {shows.map((show, i) => (
-              <div key={show.id} className="card flex gap-3 items-center">
-                <span className={`flex-shrink-0 w-6 text-center text-sm font-bold tabular-nums ${i < 3 ? 'text-brand-400' : 'text-slate-600'}`}>
-                  {i + 1}
-                </span>
+            {shows.map((show, i) => {
+              const isExpanded = expandedShowId === show.id
 
-                <div className="flex-shrink-0 w-11 h-16 bg-slate-800 rounded-lg overflow-hidden">
-                  {show.poster_path ? (
-                    <img
-                      src={`${TMDB_IMG}/w185${show.poster_path}`}
-                      alt={show.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-lg">📺</div>
-                  )}
-                </div>
+              return (
+                <button
+                  key={show.id}
+                  type="button"
+                  onClick={() => setExpandedShowId(isExpanded ? null : show.id)}
+                  className="card flex gap-3 items-start w-full text-left"
+                  title={show.overview ? 'Ver/ocultar sinopse' : undefined}
+                >
+                  <span className={`flex-shrink-0 w-6 text-center text-sm font-bold tabular-nums mt-5 ${i < 3 ? 'text-brand-400' : 'text-slate-600'}`}>
+                    {i + 1}
+                  </span>
 
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-100 truncate text-sm">{show.name}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {show.first_air_date && (
-                      <span className="text-xs text-slate-500">{show.first_air_date.slice(0, 4)}</span>
-                    )}
-                    {show.vote_average > 0 && (
-                      <span className="text-xs text-yellow-400">⭐ {show.vote_average.toFixed(1)}</span>
+                  <div className="flex-shrink-0 w-11 h-16 bg-slate-800 rounded-lg overflow-hidden">
+                    {show.poster_path ? (
+                      <img
+                        src={`${TMDB_IMG}/w185${show.poster_path}`}
+                        alt={show.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-lg">📺</div>
                     )}
                   </div>
-                  {show.overview && (
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{show.overview}</p>
-                  )}
-                </div>
 
-                <button
-                  onClick={() => handleAdd(show)}
-                  className="flex-shrink-0 btn-primary text-sm py-1.5 px-3"
-                  title={`Adicionar "${show.name}" à lista`}
-                >
-                  +
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-100 truncate text-sm">{show.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {show.first_air_date && (
+                        <span className="text-xs text-slate-500">{show.first_air_date.slice(0, 4)}</span>
+                      )}
+                      {show.vote_average > 0 && (
+                        <span className="text-xs text-yellow-400">⭐ {show.vote_average.toFixed(1)}</span>
+                      )}
+                    </div>
+                    {show.overview && (
+                      <>
+                        <p className={`text-xs text-slate-500 mt-1 ${isExpanded ? '' : 'line-clamp-2'}`}>
+                          {show.overview}
+                        </p>
+                        <p className="text-[11px] text-brand-400 mt-1">
+                          {isExpanded ? 'Mostrar menos' : 'Ver sinopse completa'}
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={e => { e.stopPropagation(); handleAdd(show) }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleAdd(show)
+                      }
+                    }}
+                    className="flex-shrink-0 btn-primary text-sm py-1.5 px-3"
+                    title={`Adicionar "${show.name}" à lista`}
+                  >
+                    +
+                  </span>
                 </button>
-              </div>
-            ))}
+              )
+            })}
 
             {shows.length === 0 && !loading && (
               <div className="card text-center py-10">
