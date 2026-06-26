@@ -24,7 +24,12 @@ function getTMDBApiKey() {
   return import.meta.env.VITE_TMDB_API_KEY as string | undefined
 }
 
-export async function searchTMDBShow(title: string, signal?: AbortSignal): Promise<TMDBShow | null> {
+function findMatchingPoster(results: TMDBShow[], posterUrl?: string | null) {
+  if (!posterUrl) return null
+  return results.find(show => show.poster_path && posterUrl.includes(show.poster_path)) ?? null
+}
+
+export async function searchTMDBShow(title: string, signal?: AbortSignal, posterUrl?: string | null): Promise<TMDBShow | null> {
   const apiKey = getTMDBApiKey()
   const trimmed = title.trim()
   if (!apiKey || !trimmed) return null
@@ -37,7 +42,8 @@ export async function searchTMDBShow(title: string, signal?: AbortSignal): Promi
   if (!response.ok) throw new Error(`Erro TMDB: ${response.status}`)
 
   const data = await response.json() as { results: TMDBShow[] }
-  return data.results?.[0] ?? null
+  const results = data.results ?? []
+  return findMatchingPoster(results, posterUrl) ?? results[0] ?? null
 }
 
 export function useTMDB(platform: Platform, query = '') {
