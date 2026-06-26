@@ -12,16 +12,28 @@ export default function TMDBSeriesInfo({ title, fallbackPosterUrl }: Props) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    let active = true
     const controller = new AbortController()
     setLoading(true)
 
     searchTMDBShow(title, controller.signal)
-      .then(setShow)
-      .catch(() => setShow(null))
-      .finally(() => setLoading(false))
+      .then(data => {
+        if (active) setShow(data)
+      })
+      .catch(() => {
+        if (active) setShow(null)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
 
-    return () => controller.abort()
+    return () => {
+      active = false
+      controller.abort()
+    }
   }, [title])
+
+  if (!loading && !show && !fallbackPosterUrl) return null
 
   const posterUrl = show?.poster_path ? `${TMDB_IMG}/w500${show.poster_path}` : fallbackPosterUrl
 
