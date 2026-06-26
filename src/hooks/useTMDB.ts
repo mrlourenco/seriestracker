@@ -36,7 +36,7 @@ export async function searchTMDBShow(title: string, signal?: AbortSignal): Promi
   const response = await fetch(url, { signal })
   if (!response.ok) throw new Error(`Erro TMDB: ${response.status}`)
 
-  const data = await response.json() as Promise<{ results: TMDBShow[] }>
+  const data = await response.json() as { results: TMDBShow[] }
   return data.results?.[0] ?? null
 }
 
