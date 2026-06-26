@@ -104,30 +104,36 @@ export default function Discover() {
 
             {shows.map((show, i) => (
               <div key={show.id} className="card flex gap-3 items-start">
-                <button type="button" onClick={() => setSelectedShow(show)} className={`flex-shrink-0 w-6 text-center text-sm font-bold tabular-nums mt-5 ${i < 3 ? 'text-brand-400' : 'text-slate-600'}`}>
-                  {i + 1}
-                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedShow(show)}
+                  className="flex flex-1 gap-3 items-start text-left min-w-0"
+                >
+                  <span className={`flex-shrink-0 w-6 text-center text-sm font-bold tabular-nums mt-5 ${i < 3 ? 'text-brand-400' : 'text-slate-600'}`}>
+                    {i + 1}
+                  </span>
 
-                <button type="button" onClick={() => setSelectedShow(show)} className="flex-shrink-0 w-11 h-16 bg-slate-800 rounded-lg overflow-hidden">
-                  {show.poster_path ? (
-                    <img src={`${TMDB_IMG}/w185${show.poster_path}`} alt={show.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-lg">📺</div>
-                  )}
-                </button>
+                  <span className="flex-shrink-0 w-11 h-16 bg-slate-800 rounded-lg overflow-hidden">
+                    {show.poster_path ? (
+                      <img src={`${TMDB_IMG}/w185${show.poster_path}`} alt={show.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="w-full h-full flex items-center justify-center text-lg">📺</span>
+                    )}
+                  </span>
 
-                <button type="button" onClick={() => setSelectedShow(show)} className="flex-1 min-w-0 text-left">
-                  <p className="font-medium text-slate-100 truncate text-sm">{show.name}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {show.first_air_date && <span className="text-xs text-slate-500">{show.first_air_date.slice(0, 4)}</span>}
-                    {show.vote_average > 0 && <span className="text-xs text-yellow-400">⭐ {show.vote_average.toFixed(1)}</span>}
-                  </div>
-                  {show.overview && (
-                    <>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{show.overview}</p>
-                      <p className="text-[11px] text-brand-400 mt-1">Ver detalhe</p>
-                    </>
-                  )}
+                  <span className="flex-1 min-w-0">
+                    <span className="font-medium text-slate-100 truncate text-sm block">{show.name}</span>
+                    <span className="flex items-center gap-2 mt-0.5">
+                      {show.first_air_date && <span className="text-xs text-slate-500">{show.first_air_date.slice(0, 4)}</span>}
+                      {show.vote_average > 0 && <span className="text-xs text-yellow-400">⭐ {show.vote_average.toFixed(1)}</span>}
+                    </span>
+                    {show.overview && (
+                      <>
+                        <span className="text-xs text-slate-500 mt-1 line-clamp-2 block">{show.overview}</span>
+                        <span className="text-[11px] text-brand-400 mt-1 block">Ver detalhe</span>
+                      </>
+                    )}
+                  </span>
                 </button>
 
                 <button onClick={() => handleAdd(show)} className="flex-shrink-0 btn-primary text-sm py-1.5 px-3" title={`Adicionar ${show.name} à lista`}>
