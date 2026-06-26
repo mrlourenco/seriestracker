@@ -16,7 +16,7 @@ export default function TMDBSeriesInfo({ title, fallbackPosterUrl }: Props) {
     const controller = new AbortController()
     setLoading(true)
 
-    searchTMDBShow(title, controller.signal)
+    searchTMDBShow(title, controller.signal, fallbackPosterUrl)
       .then(data => {
         if (active) setShow(data)
       })
@@ -31,7 +31,7 @@ export default function TMDBSeriesInfo({ title, fallbackPosterUrl }: Props) {
       active = false
       controller.abort()
     }
-  }, [title])
+  }, [title, fallbackPosterUrl])
 
   if (!loading && !show && !fallbackPosterUrl) return null
 
