@@ -38,24 +38,28 @@ export default function TMDBSeriesInfo({ title, fallbackPosterUrl }: Props) {
   const posterUrl = show?.poster_path ? `${TMDB_IMG}/w500${show.poster_path}` : fallbackPosterUrl
 
   return (
-    <div className="card space-y-3">
+    <div className="card space-y-4">
       {posterUrl && (
         <img
           src={posterUrl}
           alt={title}
-          className="w-full max-h-[520px] object-contain rounded-xl bg-slate-900"
+          className="w-[72%] max-w-xs max-h-[520px] mx-auto object-contain rounded-xl bg-slate-900"
         />
       )}
 
       {show && (
-        <a
-          href={`https://www.themoviedb.org/tv/${show.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-brand-400 hover:underline inline-block"
-        >
-          Abrir no TMDB
-        </a>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+          {show.first_air_date && <span className="text-slate-400">{show.first_air_date.slice(0, 4)}</span>}
+          {show.vote_average > 0 && <span className="text-yellow-400">⭐ {show.vote_average.toFixed(1)}</span>}
+          <a
+            href={`https://www.themoviedb.org/tv/${show.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-400 hover:underline"
+          >
+            Abrir no TMDB
+          </a>
+        </div>
       )}
 
       {(loading || show?.overview) && (
