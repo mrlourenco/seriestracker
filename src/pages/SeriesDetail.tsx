@@ -46,7 +46,7 @@ export default function SeriesDetail() {
     return (
       <Layout>
         <div className="card text-center py-10">
-          <p className="text-3xl mb-2">Série não encontrada</p>
+          <p className="text-lg text-slate-400 mb-2">Série não encontrada</p>
           <Link to="/series" className="btn-secondary inline-block mt-4">Voltar</Link>
         </div>
       </Layout>
@@ -64,7 +64,7 @@ export default function SeriesDetail() {
           </div>
           {series.rating && (
             <p className="text-sm text-slate-300">
-              <span className="text-yellow-400">{'★'.repeat(series.rating >= 5 ? Math.round(series.rating / 2) : 1)}</span>
+              <span className="text-yellow-400">{'★'.repeat(Math.round(series.rating / 2) || 1)}</span>
               {' '}{series.rating}/10
             </p>
           )}
