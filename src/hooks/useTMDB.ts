@@ -20,6 +20,26 @@ const PROVIDER_IDS: Partial<Record<Platform, number>> = {
 
 export const TMDB_IMG = 'https://image.tmdb.org/t/p'
 
+function getTMDBApiKey() {
+  return import.meta.env.VITE_TMDB_API_KEY as string | undefined
+}
+
+export async function searchTMDBShow(title: string, signal?: AbortSignal): Promise<TMDBShow | null> {
+  const apiKey = getTMDBApiKey()
+  const trimmed = title.trim()
+  if (!apiKey || !trimmed) return null
+
+  const url =
+    `https://api.themoviedb.org/3/search/tv?api_key=${apiKey}` +
+    `&query=${encodeURIComponent(trimmed)}&language=pt-PT&page=1`
+
+  const response = await fetch(url, { signal })
+  if (!response.ok) throw new Error(`Erro TMDB: ${response.status}`)
+
+  const data = await response.json() as { results: TMDBShow[] }
+  return data.results?.[0] ?? null
+}
+
 export function useTMDB(platform: Platform, query = '') {
   const [shows, setShows] = useState<TMDBShow[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,7 +61,7 @@ export function useTMDB(platform: Platform, query = '') {
   })
 
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_TMDB_API_KEY
+    const apiKey = getTMDBApiKey()
     if (!apiKey) {
       setError('Adiciona VITE_TMDB_API_KEY ao ficheiro .env.local para usar esta funcionalidade.')
       setLoading(false)

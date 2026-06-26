@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
+import TMDBShowModal from '../components/TMDBShowModal'
 import { useTMDB, TMDB_IMG } from '../hooks/useTMDB'
 import type { TMDBShow } from '../hooks/useTMDB'
 import type { Platform, SeriesInsert } from '../types'
@@ -12,7 +13,7 @@ export default function Discover() {
   const [platform, setPlatform] = useState<Platform>(DISCOVERABLE[0])
   const [searchInput, setSearchInput] = useState('')
   const [query, setQuery] = useState('')
-  const [expandedShowId, setExpandedShowId] = useState<number | null>(null)
+  const [selectedShow, setSelectedShow] = useState<TMDBShow | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { shows, loading, error, hasMore, loadMore } = useTMDB(platform, query)
   const navigate = useNavigate()
@@ -24,7 +25,7 @@ export default function Discover() {
   }, [searchInput])
 
   useEffect(() => {
-    setExpandedShowId(null)
+    setSelectedShow(null)
   }, [query, platform])
 
   function handleAdd(show: TMDBShow) {
@@ -54,12 +55,7 @@ export default function Discover() {
           <h1 className="text-2xl font-bold text-slate-100">Descobrir</h1>
           <p className="text-slate-400 text-sm mt-1">
             via{' '}
-            <a
-              href="https://www.themoviedb.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-400 hover:underline"
-            >
+            <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:underline">
               The Movie Database
             </a>
           </p>
@@ -78,9 +74,7 @@ export default function Discover() {
             <button
               key={p}
               onClick={() => setPlatform(p)}
-              className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${
-                platform === p ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'
-              }`}
+              className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${platform === p ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
             >
               {p}
             </button>
@@ -100,104 +94,72 @@ export default function Discover() {
           </div>
         )}
 
-        {!error && (shows.length > 0 || (!loading)) && (
+        {!error && (shows.length > 0 || !loading) && (
           <div className="space-y-2">
             <p className="text-xs text-slate-500">
               {isSearching
-                ? <>Resultados para <span className="text-slate-300 font-medium">"{query}"</span> · pesquisa global</>
-                : <>Top <span className="text-slate-300 font-medium">{platform}</span> · disponível em Portugal · ordenado por popularidade</>
-              }
+                ? <>Resultados para <span className="text-slate-300 font-medium">{query}</span> · pesquisa global</>
+                : <>Top <span className="text-slate-300 font-medium">{platform}</span> · disponível em Portugal · ordenado por popularidade</>}
             </p>
 
-            {shows.map((show, i) => {
-              const isExpanded = expandedShowId === show.id
-
-              return (
+            {shows.map((show, i) => (
+              <div key={show.id} className="card flex gap-3 items-start">
                 <button
-                  key={show.id}
                   type="button"
-                  onClick={() => setExpandedShowId(isExpanded ? null : show.id)}
-                  className="card flex gap-3 items-start w-full text-left"
-                  title={show.overview ? 'Ver/ocultar sinopse' : undefined}
+                  onClick={() => setSelectedShow(show)}
+                  className="flex flex-1 gap-3 items-start text-left min-w-0"
                 >
                   <span className={`flex-shrink-0 w-6 text-center text-sm font-bold tabular-nums mt-5 ${i < 3 ? 'text-brand-400' : 'text-slate-600'}`}>
                     {i + 1}
                   </span>
 
-                  <div className="flex-shrink-0 w-11 h-16 bg-slate-800 rounded-lg overflow-hidden">
+                  <span className="flex-shrink-0 w-11 h-16 bg-slate-800 rounded-lg overflow-hidden">
                     {show.poster_path ? (
-                      <img
-                        src={`${TMDB_IMG}/w185${show.poster_path}`}
-                        alt={show.name}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={`${TMDB_IMG}/w185${show.poster_path}`} alt={show.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-lg">📺</div>
+                      <span className="w-full h-full flex items-center justify-center text-lg">📺</span>
                     )}
-                  </div>
+                  </span>
 
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-100 truncate text-sm">{show.name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {show.first_air_date && (
-                        <span className="text-xs text-slate-500">{show.first_air_date.slice(0, 4)}</span>
-                      )}
-                      {show.vote_average > 0 && (
-                        <span className="text-xs text-yellow-400">⭐ {show.vote_average.toFixed(1)}</span>
-                      )}
-                    </div>
+                  <span className="flex-1 min-w-0">
+                    <span className="font-medium text-slate-100 truncate text-sm block">{show.name}</span>
+                    <span className="flex items-center gap-2 mt-0.5">
+                      {show.first_air_date && <span className="text-xs text-slate-500">{show.first_air_date.slice(0, 4)}</span>}
+                      {show.vote_average > 0 && <span className="text-xs text-yellow-400">⭐ {show.vote_average.toFixed(1)}</span>}
+                    </span>
                     {show.overview && (
                       <>
-                        <p className={`text-xs text-slate-500 mt-1 ${isExpanded ? '' : 'line-clamp-2'}`}>
-                          {show.overview}
-                        </p>
-                        <p className="text-[11px] text-brand-400 mt-1">
-                          {isExpanded ? 'Mostrar menos' : 'Ver sinopse completa'}
-                        </p>
+                        <span className="text-xs text-slate-500 mt-1 line-clamp-2 block">{show.overview}</span>
+                        <span className="text-[11px] text-brand-400 mt-1 block">Ver detalhe</span>
                       </>
                     )}
-                  </div>
-
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={e => { e.stopPropagation(); handleAdd(show) }}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        handleAdd(show)
-                      }
-                    }}
-                    className="flex-shrink-0 btn-primary text-sm py-1.5 px-3"
-                    title={`Adicionar "${show.name}" à lista`}
-                  >
-                    +
                   </span>
                 </button>
-              )
-            })}
+
+                <button onClick={() => handleAdd(show)} className="flex-shrink-0 btn-primary text-sm py-1.5 px-3" title={`Adicionar ${show.name} à lista`}>
+                  +
+                </button>
+              </div>
+            ))}
 
             {shows.length === 0 && !loading && (
               <div className="card text-center py-10">
-                <p className="text-slate-400">
-                  {isSearching ? `Nenhum resultado para "${query}"` : `Nenhum resultado para ${platform}`}
-                </p>
+                <p className="text-slate-400">{isSearching ? `Nenhum resultado para ${query}` : `Nenhum resultado para ${platform}`}</p>
               </div>
             )}
 
             {hasMore && (
-              <button
-                onClick={loadMore}
-                disabled={loading}
-                className="w-full btn-secondary py-2 text-sm mt-2"
-              >
+              <button onClick={loadMore} disabled={loading} className="w-full btn-secondary py-2 text-sm mt-2">
                 {loading ? 'A carregar...' : 'Carregar mais'}
               </button>
             )}
           </div>
         )}
       </div>
+
+      {selectedShow && (
+        <TMDBShowModal show={selectedShow} onClose={() => setSelectedShow(null)} onAdd={handleAdd} />
+      )}
     </Layout>
   )
 }
