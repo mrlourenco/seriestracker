@@ -45,11 +45,11 @@ export default function SeriesCard({ series, ownerName }: Props) {
         </div>
         {(series.current_season !== null || series.current_episode !== null || series.rating !== null) && (
           <div style={{ display: 'flex', gap: 10, marginTop: 5, font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
-            {(series.current_season || series.current_episode) && (
+            {(series.current_season !== null || series.current_episode !== null) && (
               <span>
-                {series.current_season && `T${series.current_season}`}
-                {series.current_season && series.current_episode && ' · '}
-                {series.current_episode && `Ep ${series.current_episode}`}
+                {series.current_season !== null && `T${series.current_season}`}
+                {series.current_season !== null && series.current_episode !== null && ' · '}
+                {series.current_episode !== null && `Ep ${series.current_episode}`}
               </span>
             )}
             {series.rating !== null && <span>★ {series.rating}/10</span>}
