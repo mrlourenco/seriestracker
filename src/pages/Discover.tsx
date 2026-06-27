@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
+import Spinner from '../components/Spinner'
 import TMDBShowModal from '../components/TMDBShowModal'
+import { seriesGradient } from '../lib/gradients'
 import { useTMDB, TMDB_IMG } from '../hooks/useTMDB'
 import type { TMDBShow } from '../hooks/useTMDB'
 import type { Platform, SeriesInsert } from '../types'
@@ -28,6 +30,10 @@ export default function Discover() {
     setSelectedShow(null)
   }, [query, platform])
 
+  const isTyping = searchInput !== query
+  const isSearching = query.trim().length > 0
+  const isBusy = isTyping || loading
+
   function handleAdd(show: TMDBShow) {
     const prefill: SeriesInsert = {
       title: show.name,
@@ -47,110 +53,187 @@ export default function Discover() {
     navigate('/series/new', { state: { prefill } })
   }
 
-  const isSearching = query.trim().length > 0
-
   return (
     <Layout>
-      <div className="space-y-5">
+      <div style={{ padding: '20px 16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Descobrir</h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <h1 style={{ font: "800 24px/1.1 'Hanken Grotesk'", color: '#f3f3f5', letterSpacing: '-.02em' }}>Descobrir</h1>
+          <p style={{ font: "500 13px 'Hanken Grotesk'", color: '#6b6b73', marginTop: 4 }}>
             via{' '}
-            <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:underline">
+            <a
+              href="https://www.themoviedb.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#E11D2A', textDecoration: 'none' }}
+            >
               The Movie Database
             </a>
           </p>
         </div>
 
-        <input
-          type="search"
-          value={searchInput}
-          onChange={e => setSearchInput(e.target.value)}
-          placeholder="Pesquisar séries..."
-          className="input w-full"
-        />
+        {/* Search input with debounce spinner */}
+        <div style={{ position: 'relative' }}>
+          <input
+            type="search"
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            placeholder="Pesquisar séries..."
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: '#131318', border: '1px solid #26262e', borderRadius: 12,
+              color: '#f3f3f5', font: "500 15px 'Hanken Grotesk'",
+              padding: '12px 40px 12px 14px', outline: 'none',
+            }}
+          />
+          {isBusy && searchInput.length > 0 && (
+            <div style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+              <Spinner size={16} />
+            </div>
+          )}
+        </div>
 
-        <div className={`flex gap-2 overflow-x-auto pb-1 transition-opacity ${isSearching ? 'opacity-40 pointer-events-none' : ''}`}>
+        {/* Platform pills */}
+        <div className="noscroll" style={{
+          display: 'flex', gap: 8, overflowX: 'auto',
+          opacity: isSearching ? 0.4 : 1,
+          pointerEvents: isSearching ? 'none' : 'auto',
+          transition: 'opacity 0.2s',
+        }}>
           {DISCOVERABLE.map(p => (
             <button
               key={p}
               onClick={() => setPlatform(p)}
-              className={`flex-shrink-0 badge py-1.5 px-3 text-sm ${platform === p ? 'bg-brand-700 text-brand-100' : 'bg-slate-800 text-slate-300'}`}
+              style={{
+                flexShrink: 0,
+                background: platform === p ? '#E11D2A' : '#16161b',
+                color: platform === p ? '#fff' : '#b4b4bd',
+                font: "600 12px 'Hanken Grotesk'",
+                padding: '7px 14px', borderRadius: 999,
+                border: platform === p ? 'none' : '1px solid #26262e',
+                cursor: 'pointer',
+              }}
             >
               {p}
             </button>
           ))}
         </div>
 
+        {/* Full-page spinner — only when no results yet */}
         {loading && shows.length === 0 && (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}>
+            <Spinner />
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="card border-red-800 bg-red-950/30 space-y-1">
-            <p className="text-red-300 font-medium text-sm">Não foi possível carregar</p>
-            <p className="text-red-400 text-xs">{error}</p>
+          <div style={{ background: 'rgba(127,29,29,.25)', border: '1px solid #7f1d1d', borderRadius: 14, padding: '14px 16px' }}>
+            <p style={{ font: "600 13px 'Hanken Grotesk'", color: '#fca5a5' }}>Não foi possível carregar</p>
+            <p style={{ font: "500 12px 'Hanken Grotesk'", color: '#f87171', marginTop: 4 }}>{error}</p>
           </div>
         )}
 
+        {/* Results */}
         {!error && (shows.length > 0 || !loading) && (
-          <div className="space-y-2">
-            <p className="text-xs text-slate-500">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+            <p style={{ font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
               {isSearching
-                ? <>Resultados para <span className="text-slate-300 font-medium">{query}</span> · pesquisa global</>
-                : <>Top <span className="text-slate-300 font-medium">{platform}</span> · disponível em Portugal · ordenado por popularidade</>}
+                ? <>Resultados para <span style={{ color: '#d4d4d8', fontWeight: 600 }}>"{query}"</span> · pesquisa global</>
+                : <>Top <span style={{ color: '#d4d4d8', fontWeight: 600 }}>{platform}</span> · disponível em Portugal · por popularidade</>
+              }
             </p>
 
             {shows.map((show, i) => (
-              <div key={show.id} className="card flex gap-3 items-start">
+              <div
+                key={show.id}
+                style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 13px', borderRadius: 15, background: '#131318', border: '1px solid #20202a' }}
+              >
+                <span style={{
+                  flexShrink: 0, width: 22, textAlign: 'center',
+                  font: "700 13px 'Hanken Grotesk'",
+                  color: i < 3 ? '#E11D2A' : '#3f3f46',
+                }}>
+                  {i + 1}
+                </span>
+
                 <button
                   type="button"
                   onClick={() => setSelectedShow(show)}
-                  className="flex flex-1 gap-3 items-start text-left min-w-0"
+                  style={{ flexShrink: 0, width: 44, height: 63, borderRadius: 8, overflow: 'hidden', background: '#1e1e26', position: 'relative', border: 'none', padding: 0, cursor: 'pointer' }}
                 >
-                  <span className={`flex-shrink-0 w-6 text-center text-sm font-bold tabular-nums mt-5 ${i < 3 ? 'text-brand-400' : 'text-slate-600'}`}>
-                    {i + 1}
-                  </span>
-
-                  <span className="flex-shrink-0 w-11 h-16 bg-slate-800 rounded-lg overflow-hidden">
-                    {show.poster_path ? (
-                      <img src={`${TMDB_IMG}/w185${show.poster_path}`} alt={show.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="w-full h-full flex items-center justify-center text-lg">📺</span>
-                    )}
-                  </span>
-
-                  <span className="flex-1 min-w-0">
-                    <span className="font-medium text-slate-100 truncate text-sm block">{show.name}</span>
-                    <span className="flex items-center gap-2 mt-0.5">
-                      {show.first_air_date && <span className="text-xs text-slate-500">{show.first_air_date.slice(0, 4)}</span>}
-                      {show.vote_average > 0 && <span className="text-xs text-yellow-400">⭐ {show.vote_average.toFixed(1)}</span>}
-                    </span>
-                    {show.overview && (
-                      <>
-                        <span className="text-xs text-slate-500 mt-1 line-clamp-2 block">{show.overview}</span>
-                        <span className="text-[11px] text-brand-400 mt-1 block">Ver detalhe</span>
-                      </>
-                    )}
-                  </span>
+                  {show.poster_path ? (
+                    <img
+                      src={`${TMDB_IMG}/w185${show.poster_path}`}
+                      alt={show.name}
+                      loading="lazy"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ position: 'absolute', inset: 0, background: seriesGradient(show.name) }} />
+                  )}
                 </button>
 
-                <button onClick={() => handleAdd(show)} className="flex-shrink-0 btn-primary text-sm py-1.5 px-3" title={`Adicionar ${show.name} à lista`}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedShow(show)}
+                  style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                >
+                  <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {show.name}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                    {show.first_air_date && (
+                      <span style={{ font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>{show.first_air_date.slice(0, 4)}</span>
+                    )}
+                    {show.vote_average > 0 && (
+                      <span style={{ font: "600 12px 'Hanken Grotesk'", color: '#fbbf24' }}>★ {show.vote_average.toFixed(1)}</span>
+                    )}
+                  </div>
+                  {show.overview && (
+                    <p style={{ font: "500 11px/1.4 'Hanken Grotesk'", color: '#6b6b73', marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {show.overview}
+                    </p>
+                  )}
+                  <span style={{ font: "600 11px 'Hanken Grotesk'", color: '#E11D2A', marginTop: 4, display: 'block' }}>Ver detalhe</span>
+                </button>
+
+                <button
+                  onClick={() => handleAdd(show)}
+                  title={`Adicionar "${show.name}" à lista`}
+                  style={{
+                    flexShrink: 0, width: 34, height: 34, borderRadius: 10,
+                    background: '#E11D2A', color: '#fff',
+                    font: "700 20px 'Hanken Grotesk'", lineHeight: 1,
+                    border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
                   +
                 </button>
               </div>
             ))}
 
             {shows.length === 0 && !loading && (
-              <div className="card text-center py-10">
-                <p className="text-slate-400">{isSearching ? `Nenhum resultado para ${query}` : `Nenhum resultado para ${platform}`}</p>
+              <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73' }}>
+                  {isSearching ? `Nenhum resultado para "${query}"` : `Nenhum resultado para ${platform}`}
+                </p>
               </div>
             )}
 
             {hasMore && (
-              <button onClick={loadMore} disabled={loading} className="w-full btn-secondary py-2 text-sm mt-2">
+              <button
+                onClick={loadMore}
+                disabled={loading}
+                style={{
+                  width: '100%', background: '#16161b', border: '1px solid #26262e',
+                  color: '#b4b4bd', font: "600 13px 'Hanken Grotesk'",
+                  padding: '12px', borderRadius: 12, cursor: loading ? 'default' : 'pointer',
+                  marginTop: 4, opacity: loading ? 0.5 : 1,
+                }}
+              >
                 {loading ? 'A carregar...' : 'Carregar mais'}
               </button>
             )}

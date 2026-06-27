@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { seriesGradient } from '../lib/gradients'
+import { STATUS_BADGE } from '../lib/statusBadge'
 import type { Series } from '../types'
-import { STATUS_LABELS, STATUS_COLORS } from '../types'
+import { STATUS_LABELS } from '../types'
 
 interface Props {
   series: Series
@@ -8,38 +10,51 @@ interface Props {
 }
 
 export default function SeriesCard({ series, ownerName }: Props) {
+  const badge = STATUS_BADGE[series.status]
+
   return (
-    <Link to={`/series/${series.id}`} className="card flex gap-3 hover:border-slate-600 transition-colors">
-      <div className="flex-shrink-0 w-14 h-20 bg-slate-800 rounded-lg overflow-hidden">
+    <Link
+      to={`/series/${series.id}`}
+      style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 13px', borderRadius: 15, background: '#131318', border: '1px solid #20202a', textDecoration: 'none' }}
+    >
+      <div style={{ flexShrink: 0, width: 42, height: 60, borderRadius: 8, overflow: 'hidden', background: '#1e1e26', position: 'relative' }}>
         {series.poster_url ? (
-          <img src={series.poster_url} alt={series.title} className="w-full h-full object-cover" />
+          <img src={series.poster_url} alt={series.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-2xl">📺</div>
+          <div style={{ position: 'absolute', inset: 0, background: seriesGradient(series.title) }} />
         )}
       </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-slate-100 truncate">{series.title}</h3>
-        <div className="flex flex-wrap gap-1.5 mt-1">
-          <span className={`badge ${STATUS_COLORS[series.status]}`}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {series.title}
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 5 }}>
+          <span style={{ background: badge.bg, color: badge.color, font: "600 11px 'Hanken Grotesk'", padding: '3px 8px', borderRadius: 6 }}>
             {STATUS_LABELS[series.status]}
           </span>
           {series.platform && (
-            <span className="badge bg-slate-700 text-slate-300">{series.platform}</span>
+            <span style={{ background: 'rgba(255,255,255,.06)', color: '#9ca3af', font: "500 11px 'Hanken Grotesk'", padding: '3px 8px', borderRadius: 6 }}>
+              {series.platform}
+            </span>
           )}
           {ownerName && (
-            <span className="badge bg-indigo-950 text-indigo-300 border border-indigo-800">{ownerName}</span>
+            <span style={{ background: 'rgba(99,102,241,.15)', color: '#a5b4fc', font: "500 11px 'Hanken Grotesk'", padding: '3px 8px', borderRadius: 6 }}>
+              {ownerName}
+            </span>
           )}
         </div>
-        <div className="mt-1.5 text-xs text-slate-400 space-y-0.5">
-          {(series.current_season || series.current_episode) && (
-            <p>
-              {series.current_season && `T${series.current_season}`}
-              {series.current_season && series.current_episode && ' · '}
-              {series.current_episode && `Ep ${series.current_episode}`}
-            </p>
-          )}
-          {series.rating && <p>{'⭐'.repeat(Math.round(series.rating / 2))} {series.rating}/10</p>}
-        </div>
+        {(series.current_season !== null || series.current_episode !== null || series.rating !== null) && (
+          <div style={{ display: 'flex', gap: 10, marginTop: 5, font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
+            {(series.current_season || series.current_episode) && (
+              <span>
+                {series.current_season && `T${series.current_season}`}
+                {series.current_season && series.current_episode && ' · '}
+                {series.current_episode && `Ep ${series.current_episode}`}
+              </span>
+            )}
+            {series.rating !== null && <span>★ {series.rating}/10</span>}
+          </div>
+        )}
       </div>
     </Link>
   )

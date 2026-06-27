@@ -101,7 +101,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           const exact = to === '/'
           const active = exact
             ? location.pathname === '/'
-            : location.pathname.startsWith(to)
+            : to === '/series'
+              ? location.pathname === '/series' || (location.pathname.startsWith('/series/') && !location.pathname.startsWith('/series/new') && !/\/series\/[^/]+\/edit/.test(location.pathname))
+              : location.pathname.startsWith(to)
           const color = active ? '#E11D2A' : '#6b6b73'
 
           return (
