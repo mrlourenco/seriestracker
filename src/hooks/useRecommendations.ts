@@ -19,13 +19,13 @@ export function useRecommendations() {
     setError(null)
     setRecommendations([])
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Não autenticado')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Não autenticado')
 
       const { data: seriesData } = await supabase
         .from('series')
         .select('title, status, rating')
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .in('status', ['watching', 'completed', 'want_to_watch'])
         .order('rating', { ascending: false, nullsFirst: false })
         .limit(40)
