@@ -11,6 +11,7 @@ interface Props {
 const empty: SeriesInsert = {
   title: '',
   poster_url: null,
+  tmdb_id: null,
   status: 'want_to_watch',
   platform: null,
   current_season: null,
@@ -27,6 +28,7 @@ function toFormData(s: Series | SeriesInsert): SeriesInsert {
   return {
     title: s.title,
     poster_url: s.poster_url,
+    tmdb_id: s.tmdb_id ?? null,
     status: s.status,
     platform: s.platform,
     current_season: s.current_season,

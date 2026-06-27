@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
+import SeriesTMDBInfo from '../components/TMDBSeriesInfo'
 import { useSeries } from '../hooks/useSeries'
 import { useAuth } from '../hooks/useAuth'
 import { seriesGradient } from '../lib/gradients'
@@ -91,6 +92,8 @@ export default function SeriesDetail() {
             )}
           </div>
         </div>
+
+        <SeriesTMDBInfo title={series.title} fallbackPosterUrl={series.poster_url} tmdbId={series.tmdb_id} />
 
         {/* Progress */}
         {(series.current_season || series.current_episode) && (

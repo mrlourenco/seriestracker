@@ -10,6 +10,25 @@ interface Filters {
   userIds?: string[]      // when set, fetches series for multiple users via .in()
 }
 
+function withoutTMDBId(data: SeriesInsert) {
+  // Allows the app to keep working before the optional DB migration is applied.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { tmdb_id, ...rest } = data
+  return rest
+}
+
+function isMissingTMDBIdColumn(error: unknown) {
+  const message =
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : String(error)
+
+  return message.toLowerCase().includes('tmdb_id')
+}
+
 export function useSeries(filters: Filters = {}) {
   const [series, setSeries] = useState<Series[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,8 +71,16 @@ export function useSeries(filters: Filters = {}) {
   const addSeries = async (data: SeriesInsert) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Não autenticado')
-    const { error } = await supabase.from('series').insert({ ...data, user_id: user.id })
-    if (error) throw error
+
+    const payload = { ...data, user_id: user.id }
+    const { error } = await supabase.from('series').insert(payload)
+
+    if (error) {
+      if (!isMissingTMDBIdColumn(error)) throw error
+      const { error: retryError } = await supabase.from('series').insert({ ...withoutTMDBId(data), user_id: user.id })
+      if (retryError) throw retryError
+    }
+
     await fetchSeries()
   }
 

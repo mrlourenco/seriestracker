@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
+import TMDBShowModal from '../components/TMDBShowModal'
 import { seriesGradient } from '../lib/gradients'
 import { useTMDB, TMDB_IMG } from '../hooks/useTMDB'
 import type { TMDBShow } from '../hooks/useTMDB'
@@ -14,6 +15,7 @@ export default function Discover() {
   const [platform, setPlatform] = useState<Platform>(DISCOVERABLE[0])
   const [searchInput, setSearchInput] = useState('')
   const [query, setQuery] = useState('')
+  const [selectedShow, setSelectedShow] = useState<TMDBShow | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { shows, loading, error, hasMore, loadMore } = useTMDB(platform, query)
   const navigate = useNavigate()
@@ -24,6 +26,10 @@ export default function Discover() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [searchInput])
 
+  useEffect(() => {
+    setSelectedShow(null)
+  }, [query, platform])
+
   const isTyping = searchInput !== query
   const isSearching = query.trim().length > 0
   const isBusy = isTyping || loading
@@ -32,6 +38,7 @@ export default function Discover() {
     const prefill: SeriesInsert = {
       title: show.name,
       poster_url: show.poster_path ? `${TMDB_IMG}/w500${show.poster_path}` : null,
+      tmdb_id: show.id,
       platform,
       status: 'want_to_watch',
       current_season: null,
@@ -151,7 +158,11 @@ export default function Discover() {
                   {i + 1}
                 </span>
 
-                <div style={{ flexShrink: 0, width: 44, height: 63, borderRadius: 8, overflow: 'hidden', background: '#1e1e26', position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedShow(show)}
+                  style={{ flexShrink: 0, width: 44, height: 63, borderRadius: 8, overflow: 'hidden', background: '#1e1e26', position: 'relative', border: 'none', padding: 0, cursor: 'pointer' }}
+                >
                   {show.poster_path ? (
                     <img
                       src={`${TMDB_IMG}/w185${show.poster_path}`}
@@ -162,9 +173,13 @@ export default function Discover() {
                   ) : (
                     <div style={{ position: 'absolute', inset: 0, background: seriesGradient(show.name) }} />
                   )}
-                </div>
+                </button>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedShow(show)}
+                  style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                >
                   <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {show.name}
                   </div>
@@ -181,7 +196,8 @@ export default function Discover() {
                       {show.overview}
                     </p>
                   )}
-                </div>
+                  <span style={{ font: "600 11px 'Hanken Grotesk'", color: '#E11D2A', marginTop: 4, display: 'block' }}>Ver detalhe</span>
+                </button>
 
                 <button
                   onClick={() => handleAdd(show)}
@@ -224,6 +240,10 @@ export default function Discover() {
           </div>
         )}
       </div>
+
+      {selectedShow && (
+        <TMDBShowModal show={selectedShow} onClose={() => setSelectedShow(null)} onAdd={handleAdd} />
+      )}
     </Layout>
   )
 }
