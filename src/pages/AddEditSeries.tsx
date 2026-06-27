@@ -34,8 +34,9 @@ export default function AddEditSeries() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       </Layout>
     )
@@ -43,8 +44,10 @@ export default function AddEditSeries() {
 
   return (
     <Layout>
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-slate-100">{isEdit ? 'Editar série' : 'Nova série'}</h1>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '20px 16px 20px' }}>
+        <h1 style={{ font: "800 24px/1.1 'Hanken Grotesk'", color: '#f3f3f5', letterSpacing: '-.02em' }}>
+          {isEdit ? 'Editar série' : 'Nova série'}
+        </h1>
         <SeriesForm
           initial={existing ?? prefill}
           onSubmit={handleSubmit}

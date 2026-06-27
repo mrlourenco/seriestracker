@@ -40,6 +40,15 @@ function toFormData(s: Series | SeriesInsert): SeriesInsert {
   }
 }
 
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  font: "600 12px 'Hanken Grotesk'",
+  color: '#8a8a95',
+  letterSpacing: '.04em',
+  textTransform: 'uppercase',
+  marginBottom: 6,
+}
+
 export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
   const [form, setForm] = useState<SeriesInsert>(initial ? toFormData(initial) : empty)
   const [saving, setSaving] = useState(false)
@@ -70,16 +79,20 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="bg-red-900/50 border border-red-700 rounded-xl px-4 py-3 text-red-300 text-sm">{error}</div>}
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {error && (
+        <div style={{ background: 'rgba(127,29,29,.25)', border: '1px solid #7f1d1d', borderRadius: 14, padding: '12px 16px' }}>
+          <p style={{ font: "500 13px 'Hanken Grotesk'", color: '#fca5a5' }}>{error}</p>
+        </div>
+      )}
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Título *</label>
+        <label style={labelStyle}>Título *</label>
         <input className="input" value={form.title} onChange={e => set('title', e.target.value)} placeholder="Nome da série" required />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">URL do poster</label>
+        <label style={labelStyle}>URL do poster</label>
         <input className="input" value={form.poster_url ?? ''} onChange={e => set('poster_url', e.target.value || null)} placeholder="https://..." type="url" />
         {form.poster_url && (
           <div style={{ marginTop: 8, width: 56, height: 80, borderRadius: 8, overflow: 'hidden', background: '#1e1e26' }}>
@@ -95,53 +108,53 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Estado *</label>
+        <label style={labelStyle}>Estado *</label>
         <select className="input" value={form.status} onChange={e => set('status', e.target.value as SeriesStatus)}>
           {STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Plataforma</label>
+        <label style={labelStyle}>Plataforma</label>
         <select className="input" value={form.platform ?? ''} onChange={e => set('platform', (e.target.value || null) as Platform | null)}>
           <option value="">Selecionar...</option>
           {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Temporada atual</label>
+          <label style={labelStyle}>Temporada atual</label>
           <input className="input" type="number" min={1} value={form.current_season ?? ''} onChange={e => set('current_season', e.target.value ? Number(e.target.value) : null)} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Episódio atual</label>
+          <label style={labelStyle}>Episódio atual</label>
           <input className="input" type="number" min={1} value={form.current_episode ?? ''} onChange={e => set('current_episode', e.target.value ? Number(e.target.value) : null)} />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Nota (1–10)</label>
+        <label style={labelStyle}>Nota (1–10)</label>
         <input className="input" type="number" min={1} max={10} value={form.rating ?? ''} onChange={e => set('rating', e.target.value ? Number(e.target.value) : null)} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Comentário pessoal</label>
-        <textarea className="input min-h-[80px] resize-none" value={form.notes ?? ''} onChange={e => set('notes', e.target.value || null)} placeholder="As tuas notas sobre esta série..." />
+        <label style={labelStyle}>Comentário pessoal</label>
+        <textarea className="input" style={{ minHeight: 80, resize: 'none' }} value={form.notes ?? ''} onChange={e => set('notes', e.target.value || null)} placeholder="As tuas notas sobre esta série..." />
       </div>
 
       <button
         type="button"
         onClick={() => setShowNext(v => !v)}
-        className="w-full text-left text-sm text-brand-400 hover:text-brand-300 py-1 flex items-center gap-2"
+        style={{ textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 8, font: "600 13px 'Hanken Grotesk'", color: '#E11D2A' }}
       >
         <span>{showNext ? '▼' : '▶'}</span> Próximo episódio
       </button>
 
       {showNext && (
-        <div className="card space-y-3 border-brand-800">
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Data de estreia</label>
+            <label style={labelStyle}>Data de estreia</label>
             <input
               className="input"
               type="date"
@@ -149,25 +162,25 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
               onChange={e => set('next_episode_date', e.target.value || null)}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Temporada</label>
+              <label style={labelStyle}>Temporada</label>
               <input className="input" type="number" min={1} value={form.next_episode_season ?? ''} onChange={e => set('next_episode_season', e.target.value ? Number(e.target.value) : null)} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Episódio</label>
+              <label style={labelStyle}>Episódio</label>
               <input className="input" type="number" min={1} value={form.next_episode_number ?? ''} onChange={e => set('next_episode_number', e.target.value ? Number(e.target.value) : null)} />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Título do episódio</label>
+            <label style={labelStyle}>Título do episódio</label>
             <input className="input" value={form.next_episode_title ?? ''} onChange={e => set('next_episode_title', e.target.value || null)} placeholder="Opcional" />
           </div>
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
-        <button type="submit" className="btn-primary flex-1" disabled={saving}>
+      <div style={{ display: 'flex', gap: 12, paddingTop: 4 }}>
+        <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={saving}>
           {saving ? 'A guardar...' : 'Guardar'}
         </button>
         <button type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>

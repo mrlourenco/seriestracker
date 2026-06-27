@@ -23,8 +23,10 @@ export default function SeriesList() {
 
   return (
     <Layout>
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-slate-100">As minhas séries</h1>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '20px 16px 20px' }}>
+        <h1 style={{ font: "800 24px/1.1 'Hanken Grotesk'", color: '#f3f3f5', letterSpacing: '-.02em' }}>
+          As minhas séries
+        </h1>
         <FilterBar
           status={status}
           platform={platform}
@@ -33,18 +35,22 @@ export default function SeriesList() {
           onPlatformChange={setPlatform}
           onSearchChange={setSearch}
         />
-        {error && <div className="bg-red-900/50 border border-red-700 rounded-xl px-4 py-3 text-red-300 text-sm">{error}</div>}
+        {error && (
+          <div style={{ background: 'rgba(127,29,29,.25)', border: '1px solid #7f1d1d', borderRadius: 14, padding: '14px 16px' }}>
+            <p style={{ font: "500 13px 'Hanken Grotesk'", color: '#fca5a5' }}>{error}</p>
+          </div>
+        )}
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500" />
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
         ) : series.length === 0 ? (
-          <div className="card text-center py-10">
-            <p className="text-3xl mb-2">🔍</p>
-            <p className="text-slate-400">Nenhuma série encontrada</p>
+          <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73' }}>Nenhuma série encontrada</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {series.map(s => <SeriesCard key={s.id} series={s} />)}
           </div>
         )}
