@@ -46,6 +46,25 @@ export async function searchTMDBShow(title: string, signal?: AbortSignal, poster
   return findMatchingPoster(results, posterUrl) ?? results[0] ?? null
 }
 
+export function useTMDBTrending() {
+  const [shows, setShows] = useState<TMDBShow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const apiKey = getTMDBApiKey()
+    if (!apiKey) { setError('VITE_TMDB_API_KEY não configurada'); setLoading(false); return }
+    const controller = new AbortController()
+    fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${apiKey}&language=pt-PT`, { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error(`TMDB ${r.status}`); return r.json() as Promise<{ results: TMDBShow[] }> })
+      .then(d => { setShows(d.results ?? []); setLoading(false) })
+      .catch((e: Error) => { if (e.name !== 'AbortError') { setError(e.message); setLoading(false) } })
+    return () => controller.abort()
+  }, [])
+
+  return { shows, loading, error }
+}
+
 export function useTMDB(platform: Platform, query = '') {
   const [shows, setShows] = useState<TMDBShow[]>([])
   const [loading, setLoading] = useState(true)
