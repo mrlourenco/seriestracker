@@ -19,7 +19,14 @@ export default function AddEditSeries() {
 
   useEffect(() => {
     if (!id) return
-    getById(id).then(data => { if (data) setExisting(data); setLoading(false) })
+    getById(id).then(data => {
+      if (data) {
+        setExisting(data)
+      } else {
+        navigate('/series', { replace: true })
+      }
+      setLoading(false)
+    })
   }, [id])
 
   const handleSubmit = async (data: SeriesInsert) => {

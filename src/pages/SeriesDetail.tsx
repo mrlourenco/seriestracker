@@ -116,7 +116,7 @@ export default function SeriesDetail() {
               Próximo episódio
             </p>
             <p style={{ font: "500 15px 'Hanken Grotesk'", color: '#d4d4d8' }}>
-              {new Date(series.next_episode_date).toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {new Date(`${series.next_episode_date}T00:00`).toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
             {(series.next_episode_season || series.next_episode_number) && (
               <p style={{ font: "500 13px 'Hanken Grotesk'", color: '#6b6b73', marginTop: 3 }}>

@@ -10,7 +10,7 @@ interface Filters {
   userIds?: string[]      // when set, fetches series for multiple users via .in()
 }
 
-function withoutTMDBId(data: SeriesInsert) {
+function withoutTMDBId(data: SeriesInsert | SeriesUpdate) {
   // Allows the app to keep working before the optional DB migration is applied.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { tmdb_id, ...rest } = data
@@ -18,15 +18,14 @@ function withoutTMDBId(data: SeriesInsert) {
 }
 
 function isMissingTMDBIdColumn(error: unknown) {
-  const message =
-    typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    typeof (error as { message: unknown }).message === 'string'
-      ? (error as { message: string }).message
-      : String(error)
-
-  return message.toLowerCase().includes('tmdb_id')
+  if (typeof error !== 'object' || error === null) return false
+  const e = error as Record<string, unknown>
+  const message = typeof e.message === 'string' ? e.message.toLowerCase() : ''
+  // Accept either the Postgres error code 42703 (undefined_column) or the
+  // "does not exist" wording — some PostgREST versions don't surface the code.
+  const byCode = e.code === '42703' && message.includes('tmdb_id')
+  const byMessage = message.includes('tmdb_id') && message.includes('does not exist')
+  return byCode || byMessage
 }
 
 export function useSeries(filters: Filters = {}) {
@@ -88,8 +87,7 @@ export function useSeries(filters: Filters = {}) {
     const { error } = await supabase.from('series').update(data).eq('id', id)
     if (error) {
       if (!isMissingTMDBIdColumn(error)) throw error
-      const { tmdb_id: _, ...withoutTmdb } = data as SeriesInsert
-      const { error: retryError } = await supabase.from('series').update(withoutTmdb).eq('id', id)
+      const { error: retryError } = await supabase.from('series').update(withoutTMDBId(data)).eq('id', id)
       if (retryError) throw retryError
     }
     await fetchSeries()
