@@ -29,22 +29,22 @@ Responde APENAS com JSON válido, sem markdown nem texto extra:
 [{"title":"título original em inglês","reason":"motivo curto em português, 1 frase"}]`
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
         }),
       }
     )
 
-    if (!res.ok) throw new Error(`Gemini ${res.status}`)
+    const geminiData = await res.json()
+    if (!res.ok) throw new Error(`Gemini ${res.status}: ${JSON.stringify(geminiData)}`)
 
-    const gemini = await res.json()
-    const text = gemini.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]'
-    const recs = JSON.parse(text)
+    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]'
+    const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
+    const recs = JSON.parse(cleaned)
 
     return new Response(JSON.stringify(recs), {
       headers: { ...cors, 'Content-Type': 'application/json' },
