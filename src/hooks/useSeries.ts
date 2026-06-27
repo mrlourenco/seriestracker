@@ -86,7 +86,12 @@ export function useSeries(filters: Filters = {}) {
 
   const updateSeries = async (id: string, data: SeriesUpdate) => {
     const { error } = await supabase.from('series').update(data).eq('id', id)
-    if (error) throw error
+    if (error) {
+      if (!isMissingTMDBIdColumn(error)) throw error
+      const { tmdb_id: _, ...withoutTmdb } = data as SeriesInsert
+      const { error: retryError } = await supabase.from('series').update(withoutTmdb).eq('id', id)
+      if (retryError) throw retryError
+    }
     await fetchSeries()
   }
 
