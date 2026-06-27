@@ -32,6 +32,7 @@ export default function Discover() {
     const prefill: SeriesInsert = {
       title: show.name,
       poster_url: show.poster_path ? `${TMDB_IMG}/w500${show.poster_path}` : null,
+      tmdb_id: show.id,
       platform,
       status: 'want_to_watch',
       current_season: null,
