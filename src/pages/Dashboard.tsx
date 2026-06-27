@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
+import UpcomingEpisodes from '../components/UpcomingEpisodes'
 import { useSeries } from '../hooks/useSeries'
 import { useShares } from '../hooks/useShares'
 import { useAuth } from '../hooks/useAuth'
@@ -19,11 +20,6 @@ const GRADIENTS = [
 
 function seriesGradient(s: Series) {
   return GRADIENTS[(s.title.charCodeAt(0) ?? 0) % GRADIENTS.length]
-}
-
-function progressPct(s: Series) {
-  if (!s.current_episode) return '0%'
-  return `${Math.min(Math.round((s.current_episode / 13) * 100), 99)}%`
 }
 
 function seasonEpLabel(s: Series) {
@@ -196,9 +192,6 @@ export default function Dashboard() {
                     </span>
                   )}
                 </div>
-                <div style={{ marginTop: 13, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.18)' }}>
-                  <div style={{ height: '100%', width: progressPct(hero), background: '#E11D2A', borderRadius: 2, transition: 'width 0.4s ease' }} />
-                </div>
               </div>
             </Link>
           )}
@@ -220,11 +213,8 @@ export default function Dashboard() {
                         <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s) }} />
                       )}
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.85) 4%, transparent 46%)' }} />
-                      <div style={{ position: 'absolute', left: 9, right: 9, bottom: 16, font: "700 13px/1.1 'Hanken Grotesk'", color: '#fff' }}>
+                      <div style={{ position: 'absolute', left: 9, right: 9, bottom: 10, font: "700 13px/1.1 'Hanken Grotesk'", color: '#fff' }}>
                         {s.title}
-                      </div>
-                      <div style={{ position: 'absolute', left: 9, right: 9, bottom: 8, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.28)' }}>
-                        <div style={{ height: '100%', width: progressPct(s), background: '#E11D2A', borderRadius: 2 }} />
                       </div>
                     </div>
                     <div style={{ marginTop: 8, font: "500 11px 'Hanken Grotesk'", color: '#8a8a95' }}>
@@ -234,6 +224,11 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* UPCOMING EPISODES */}
+          {filter === 'watching' && watching.length > 0 && (
+            <UpcomingEpisodes series={watching} />
           )}
 
           {/* EMPTY STATE – watching */}
