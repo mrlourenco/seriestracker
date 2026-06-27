@@ -10,5 +10,5 @@ const GRADIENTS = [
 ]
 
 export function seriesGradient(title: string): string {
-  return GRADIENTS[(title.charCodeAt(0) ?? 0) % GRADIENTS.length]
+  return GRADIENTS[(title.charCodeAt(0) || 0) % GRADIENTS.length]
 }
