@@ -18,7 +18,7 @@ export default function App() {
       <Route path="/series/:id" element={<ProtectedRoute><SeriesDetail /></ProtectedRoute>} />
       <Route path="/series/:id/edit" element={<ProtectedRoute><AddEditSeries /></ProtectedRoute>} />
       <Route path="/shares" element={<ProtectedRoute><Shares /></ProtectedRoute>} />
-      <Route path="/discover" element={<Discover />} />
+      <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
