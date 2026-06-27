@@ -18,7 +18,14 @@ function withoutTMDBId(data: SeriesInsert) {
 }
 
 function isMissingTMDBIdColumn(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error)
+  const message =
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : String(error)
+
   return message.toLowerCase().includes('tmdb_id')
 }
 
