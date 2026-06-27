@@ -160,6 +160,7 @@ export default function Dashboard() {
                 <img
                   src={hero.poster_url}
                   alt={hero.title}
+                  fetchPriority="high"
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
@@ -208,7 +209,7 @@ export default function Dashboard() {
                   <Link key={s.id} to={`/series/${s.id}`} style={{ flexShrink: 0, width: 118, textDecoration: 'none' }}>
                     <div style={{ position: 'relative', width: 118, height: 177, borderRadius: 12, overflow: 'hidden' }}>
                       {s.poster_url ? (
-                        <img src={s.poster_url} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={s.poster_url} alt={s.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s) }} />
                       )}
@@ -259,7 +260,7 @@ export default function Dashboard() {
                 >
                   <div style={{ flexShrink: 0, width: 42, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
                     {s.poster_url ? (
-                      <img src={s.poster_url} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={s.poster_url} alt={s.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
                       <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s) }} />
                     )}

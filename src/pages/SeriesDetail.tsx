@@ -59,7 +59,7 @@ export default function SeriesDetail() {
         <div className="flex gap-4">
           <div className="flex-shrink-0 w-24 h-36 bg-slate-800 rounded-xl overflow-hidden">
             {series.poster_url ? (
-              <img src={series.poster_url} alt={series.title} className="w-full h-full object-cover" />
+              <img src={series.poster_url} alt={series.title} loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-4xl">📺</div>
             )}

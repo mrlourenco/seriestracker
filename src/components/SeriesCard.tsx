@@ -12,7 +12,7 @@ export default function SeriesCard({ series, ownerName }: Props) {
     <Link to={`/series/${series.id}`} className="card flex gap-3 hover:border-slate-600 transition-colors">
       <div className="flex-shrink-0 w-14 h-20 bg-slate-800 rounded-lg overflow-hidden">
         {series.poster_url ? (
-          <img src={series.poster_url} alt={series.title} className="w-full h-full object-cover" />
+          <img src={series.poster_url} alt={series.title} loading="lazy" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-2xl">📺</div>
         )}

@@ -54,6 +54,10 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.title.trim()) { setError('O título é obrigatório'); return }
+    if (form.rating !== null && (form.rating < 1 || form.rating > 10)) {
+      setError('A nota tem de ser entre 1 e 10')
+      return
+    }
     setSaving(true)
     setError(null)
     try {
@@ -77,6 +81,17 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-1">URL do poster</label>
         <input className="input" value={form.poster_url ?? ''} onChange={e => set('poster_url', e.target.value || null)} placeholder="https://..." type="url" />
+        {form.poster_url && (
+          <div style={{ marginTop: 8, width: 56, height: 80, borderRadius: 8, overflow: 'hidden', background: '#1e1e26' }}>
+            <img
+              src={form.poster_url}
+              alt="Preview"
+              loading="lazy"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          </div>
+        )}
       </div>
 
       <div>
