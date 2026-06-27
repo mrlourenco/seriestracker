@@ -33,7 +33,11 @@ export function useRecommendations() {
       const { data, error: fnError } = await supabase.functions.invoke('recomendation', {
         body: { series: seriesData ?? [] },
       })
-      if (fnError) throw fnError
+      if (fnError) {
+        // Extract the real error message from the function's response body
+        const body = await (fnError as { context?: Response }).context?.json?.().catch(() => null)
+        throw new Error(body?.error ?? fnError.message)
+      }
       if (data?.error) throw new Error(data.error)
 
       const recs: Recommendation[] = await Promise.all(
