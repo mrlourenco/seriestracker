@@ -10,22 +10,30 @@ interface Filters {
   userIds?: string[]      // when set, fetches series for multiple users via .in()
 }
 
-function withoutTMDBId(data: SeriesInsert | SeriesUpdate) {
-  // Allows the app to keep working before the optional DB migration is applied.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { tmdb_id, ...rest } = data
-  return rest
+function pgError(error: unknown): Error {
+  if (error instanceof Error) return error
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const e = error as { message: unknown; code?: unknown; details?: unknown }
+    const msg = String(e.message)
+    const suffix = e.code ? ` [${e.code}]` : ''
+    return new Error(msg + suffix)
+  }
+  return new Error(String(error))
 }
 
-function isMissingTMDBIdColumn(error: unknown) {
+function withoutColumns<T extends object>(data: T, ...keys: string[]): Partial<T> {
+  const result = { ...data }
+  for (const key of keys) delete (result as Record<string, unknown>)[key]
+  return result
+}
+
+function isMissingColumn(error: unknown, column: string) {
   if (typeof error !== 'object' || error === null) return false
   const e = error as Record<string, unknown>
+  const code = e.code
   const message = typeof e.message === 'string' ? e.message.toLowerCase() : ''
-  // Accept either the Postgres error code 42703 (undefined_column) or the
-  // "does not exist" wording — some PostgREST versions don't surface the code.
-  const byCode = e.code === '42703' && message.includes('tmdb_id')
-  const byMessage = message.includes('tmdb_id') && message.includes('does not exist')
-  return byCode || byMessage
+  return (code === '42703' && message.includes(column)) ||
+    (message.includes(column) && message.includes('does not exist'))
 }
 
 export function useSeries(filters: Filters = {}) {
@@ -55,7 +63,7 @@ export function useSeries(filters: Filters = {}) {
       if (filters.platform) query = query.eq('platform', filters.platform)
       if (filters.search) query = query.ilike('title', `%${filters.search}%`)
       const { data, error } = await query
-      if (error) throw error
+      if (error) throw pgError(error)
       setSeries(data ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar séries')
@@ -75,26 +83,26 @@ export function useSeries(filters: Filters = {}) {
     const { error } = await supabase.from('series').insert(payload)
 
     if (error) {
-      if (!isMissingTMDBIdColumn(error)) throw error
-      const { error: retryError } = await supabase.from('series').insert({ ...withoutTMDBId(data), user_id: user.id })
-      if (retryError) throw retryError
+      if (!isMissingColumn(error, 'tmdb_id')) throw pgError(error)
+      const { error: retryError } = await supabase.from('series').insert({ ...withoutColumns(data, 'tmdb_id'), user_id: user.id })
+      if (retryError) throw pgError(retryError)
     }
 
     await fetchSeries()
   }
 
   const updateSeries = async (id: string, data: SeriesUpdate) => {
-    // tmdb_id is set via TMDB discovery, not the edit form; always strip it so
-    // updates work whether or not the optional tmdb_id migration has been applied.
-    const { tmdb_id: _tmdbId, ...safeData } = data as SeriesInsert
+    // Strip columns that only exist after optional migrations so that edits
+    // work regardless of which schema version the user's DB is on.
+    const safeData = withoutColumns(data as SeriesInsert, 'tmdb_id')
     const { error } = await supabase.from('series').update(safeData).eq('id', id)
-    if (error) throw error
+    if (error) throw pgError(error)
     await fetchSeries()
   }
 
   const deleteSeries = async (id: string) => {
     const { error } = await supabase.from('series').delete().eq('id', id)
-    if (error) throw error
+    if (error) throw pgError(error)
     await fetchSeries()
   }
 
