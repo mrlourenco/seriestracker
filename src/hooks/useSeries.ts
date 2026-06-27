@@ -84,12 +84,11 @@ export function useSeries(filters: Filters = {}) {
   }
 
   const updateSeries = async (id: string, data: SeriesUpdate) => {
-    const { error } = await supabase.from('series').update(data).eq('id', id)
-    if (error) {
-      if (!isMissingTMDBIdColumn(error)) throw error
-      const { error: retryError } = await supabase.from('series').update(withoutTMDBId(data)).eq('id', id)
-      if (retryError) throw retryError
-    }
+    // tmdb_id is set via TMDB discovery, not the edit form; always strip it so
+    // updates work whether or not the optional tmdb_id migration has been applied.
+    const { tmdb_id: _tmdbId, ...safeData } = data as SeriesInsert
+    const { error } = await supabase.from('series').update(safeData).eq('id', id)
+    if (error) throw error
     await fetchSeries()
   }
 
