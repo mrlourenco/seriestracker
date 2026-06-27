@@ -6,6 +6,7 @@ export interface Series {
   user_id: string
   title: string
   poster_url: string | null
+  tmdb_id: number | null
   status: SeriesStatus
   platform: Platform | null
   current_season: number | null

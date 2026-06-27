@@ -70,7 +70,7 @@ export default function SeriesDetail() {
           )}
         </div>
 
-        <SeriesTMDBInfo title={series.title} fallbackPosterUrl={series.poster_url} />
+        <SeriesTMDBInfo title={series.title} fallbackPosterUrl={series.poster_url} tmdbId={series.tmdb_id} />
 
         {(series.current_season || series.current_episode) && (
           <div className="card">
