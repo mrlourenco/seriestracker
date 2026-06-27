@@ -29,7 +29,7 @@ Responde APENAS com JSON válido, sem markdown nem texto extra:
 [{"title":"título original em inglês","reason":"motivo curto em português, 1 frase"}]`
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
