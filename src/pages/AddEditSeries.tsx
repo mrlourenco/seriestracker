@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import Layout from '../components/Layout'
 import SeriesForm from '../components/SeriesForm'
+import Spinner from '../components/Spinner'
 import { useSeries } from '../hooks/useSeries'
 import type { Series, SeriesInsert } from '../types'
 
@@ -35,8 +36,7 @@ export default function AddEditSeries() {
     return (
       <Layout>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          <Spinner />
         </div>
       </Layout>
     )

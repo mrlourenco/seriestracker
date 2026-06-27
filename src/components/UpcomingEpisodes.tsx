@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { seriesGradient } from '../lib/gradients'
 import type { Series } from '../types'
 
 interface Props {
@@ -8,26 +9,13 @@ interface Props {
 function getDaysUntil(dateStr: string): number {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const target = new Date(dateStr)
-  target.setHours(0, 0, 0, 0)
+  // Parse YYYY-MM-DD as local midnight to avoid UTC offset shifting the date
+  const target = new Date(`${dateStr}T00:00`)
   return Math.round((target.getTime() - today.getTime()) / 86400000)
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })
-}
-
-const GRADIENTS = [
-  'linear-gradient(150deg,#7f1d1d 0%,#dc2626 100%)',
-  'linear-gradient(150deg,#0c4a6e 0%,#0891b2 100%)',
-  'linear-gradient(150deg,#082f49 0%,#2563eb 100%)',
-  'linear-gradient(150deg,#422006 0%,#d97706 100%)',
-  'linear-gradient(150deg,#1e1b4b 0%,#4f46e5 100%)',
-  'linear-gradient(150deg,#14532d 0%,#16a34a 100%)',
-]
-
-function seriesGradient(s: Series) {
-  return GRADIENTS[(s.title.charCodeAt(0) ?? 0) % GRADIENTS.length]
+  return new Date(`${dateStr}T00:00`).toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
 export default function UpcomingEpisodes({ series }: Props) {
@@ -68,7 +56,7 @@ export default function UpcomingEpisodes({ series }: Props) {
                 {s.poster_url ? (
                   <img src={s.poster_url} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s) }} />
+                  <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s.title) }} />
                 )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import SeriesCard from '../components/SeriesCard'
 import FilterBar from '../components/FilterBar'
+import Spinner from '../components/Spinner'
 import { useSeries } from '../hooks/useSeries'
 import { useAuth } from '../hooks/useAuth'
 import type { SeriesStatus, Platform } from '../types'
@@ -42,8 +43,7 @@ export default function SeriesList() {
         )}
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            <Spinner />
           </div>
         ) : series.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 0' }}>

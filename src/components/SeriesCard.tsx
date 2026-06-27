@@ -1,27 +1,8 @@
 import { Link } from 'react-router-dom'
-import type { Series, SeriesStatus } from '../types'
+import { seriesGradient } from '../lib/gradients'
+import { STATUS_BADGE } from '../lib/statusBadge'
+import type { Series } from '../types'
 import { STATUS_LABELS } from '../types'
-
-const GRADIENTS = [
-  'linear-gradient(150deg,#7f1d1d 0%,#dc2626 100%)',
-  'linear-gradient(150deg,#0c4a6e 0%,#0891b2 100%)',
-  'linear-gradient(150deg,#082f49 0%,#2563eb 100%)',
-  'linear-gradient(150deg,#422006 0%,#d97706 100%)',
-  'linear-gradient(150deg,#1e1b4b 0%,#4f46e5 100%)',
-  'linear-gradient(150deg,#14532d 0%,#16a34a 100%)',
-]
-
-function seriesGradient(s: Series) {
-  return GRADIENTS[(s.title.charCodeAt(0) ?? 0) % GRADIENTS.length]
-}
-
-const STATUS_BADGE: Record<SeriesStatus, { bg: string; color: string }> = {
-  watching:      { bg: 'rgba(22,163,74,.15)',   color: '#4ade80' },
-  want_to_watch: { bg: 'rgba(251,191,36,.12)',  color: '#fbbf24' },
-  completed:     { bg: 'rgba(96,165,250,.12)',  color: '#60a5fa' },
-  dropped:       { bg: 'rgba(248,113,113,.12)', color: '#f87171' },
-  archived:      { bg: 'rgba(113,113,122,.12)', color: '#9ca3af' },
-}
 
 interface Props {
   series: Series
@@ -40,7 +21,7 @@ export default function SeriesCard({ series, ownerName }: Props) {
         {series.poster_url ? (
           <img src={series.poster_url} alt={series.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <div style={{ position: 'absolute', inset: 0, background: seriesGradient(series) }} />
+          <div style={{ position: 'absolute', inset: 0, background: seriesGradient(series.title) }} />
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -62,7 +43,7 @@ export default function SeriesCard({ series, ownerName }: Props) {
             </span>
           )}
         </div>
-        {(series.current_season || series.current_episode || series.rating) && (
+        {(series.current_season !== null || series.current_episode !== null || series.rating !== null) && (
           <div style={{ display: 'flex', gap: 10, marginTop: 5, font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
             {(series.current_season || series.current_episode) && (
               <span>
@@ -71,7 +52,7 @@ export default function SeriesCard({ series, ownerName }: Props) {
                 {series.current_episode && `Ep ${series.current_episode}`}
               </span>
             )}
-            {series.rating && <span>★ {series.rating}/10</span>}
+            {series.rating !== null && <span>★ {series.rating}/10</span>}
           </div>
         )}
       </div>

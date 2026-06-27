@@ -2,25 +2,12 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Layout from '../components/Layout'
 import UpcomingEpisodes from '../components/UpcomingEpisodes'
+import Spinner from '../components/Spinner'
+import { seriesGradient } from '../lib/gradients'
 import { useSeries } from '../hooks/useSeries'
 import { useShares } from '../hooks/useShares'
 import { useAuth } from '../hooks/useAuth'
 import type { Series, SeriesStatus } from '../types'
-
-const GRADIENTS = [
-  'linear-gradient(150deg,#7f1d1d 0%,#dc2626 100%)',
-  'linear-gradient(150deg,#0c4a6e 0%,#0891b2 100%)',
-  'linear-gradient(150deg,#082f49 0%,#2563eb 100%)',
-  'linear-gradient(150deg,#422006 0%,#d97706 100%)',
-  'linear-gradient(150deg,#1e1b4b 0%,#4f46e5 100%)',
-  'linear-gradient(150deg,#14532d 0%,#16a34a 100%)',
-  'linear-gradient(150deg,#4a044e 0%,#c026d3 100%)',
-  'linear-gradient(150deg,#18181b 0%,#52525b 100%)',
-]
-
-function seriesGradient(s: Series) {
-  return GRADIENTS[(s.title.charCodeAt(0) ?? 0) % GRADIENTS.length]
-}
 
 function seasonEpLabel(s: Series) {
   if (!s.current_season && !s.current_episode) return null
@@ -42,6 +29,7 @@ const PILLS: { key: SeriesStatus; label: string }[] = [
   { key: 'watching',      label: 'A ver' },
   { key: 'want_to_watch', label: 'Para ver' },
   { key: 'completed',     label: 'Terminadas' },
+  { key: 'dropped',       label: 'Abandonadas' },
   { key: 'archived',      label: 'Arquivo' },
 ]
 
@@ -148,8 +136,7 @@ export default function Dashboard() {
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          <Spinner />
         </div>
       ) : (
         <>
@@ -164,7 +151,7 @@ export default function Dashboard() {
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
-                <div style={{ position: 'absolute', inset: 0, background: seriesGradient(hero) }} />
+                <div style={{ position: 'absolute', inset: 0, background: seriesGradient(hero.title) }} />
               )}
               <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(130% 90% at 72% 18%, rgba(255,255,255,.20), transparent 58%)' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11,11,14,.97) 7%, rgba(11,11,14,.25) 48%, transparent 72%)' }} />
@@ -173,25 +160,16 @@ export default function Dashboard() {
                 <span style={{ font: "700 11px 'Hanken Grotesk'", color: '#e7e7ea', letterSpacing: '.06em' }}>A VER AGORA</span>
               </div>
               <div style={{ position: 'absolute', left: 18, right: 18, bottom: 18 }}>
-                {hero.platform && (
-                  <div style={{ font: "600 11px 'Hanken Grotesk'", color: '#cfcfd6', letterSpacing: '.08em', textTransform: 'uppercase' }}>
-                    {hero.platform}
-                  </div>
-                )}
-                <div style={{ font: "800 31px/1.04 'Hanken Grotesk'", color: '#fff', letterSpacing: '-.025em', marginTop: 7 }}>
+                <div style={{ font: "800 31px/1.04 'Hanken Grotesk'", color: '#fff', letterSpacing: '-.025em' }}>
                   {hero.title}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 11 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
                   {hero.platform && (
                     <span style={{ background: 'rgba(255,255,255,.14)', color: '#e7e7ea', font: "600 11px 'Hanken Grotesk'", padding: '4px 9px', borderRadius: 6 }}>
                       {hero.platform}
                     </span>
                   )}
-                  {seasonEpLabel(hero) && (
-                    <span style={{ font: "600 13px 'Hanken Grotesk'", color: '#d7d7dd' }}>
-                      {seasonEpLabel(hero)}
-                    </span>
-                  )}
+                  {(() => { const label = seasonEpLabel(hero); return label && <span style={{ font: "600 13px 'Hanken Grotesk'", color: '#d7d7dd' }}>{label}</span> })()}
                 </div>
               </div>
             </Link>
@@ -211,7 +189,7 @@ export default function Dashboard() {
                       {s.poster_url ? (
                         <img src={s.poster_url} alt={s.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s) }} />
+                        <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s.title) }} />
                       )}
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.85) 4%, transparent 46%)' }} />
                       <div style={{ position: 'absolute', left: 9, right: 9, bottom: 10, font: "700 13px/1.1 'Hanken Grotesk'", color: '#fff' }}>
@@ -262,7 +240,7 @@ export default function Dashboard() {
                     {s.poster_url ? (
                       <img src={s.poster_url} alt={s.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s) }} />
+                      <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s.title) }} />
                     )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>

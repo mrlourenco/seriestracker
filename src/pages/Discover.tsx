@@ -1,24 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
+import Spinner from '../components/Spinner'
+import { seriesGradient } from '../lib/gradients'
 import { useTMDB, TMDB_IMG } from '../hooks/useTMDB'
 import type { TMDBShow } from '../hooks/useTMDB'
 import type { Platform, SeriesInsert } from '../types'
 import { PLATFORMS } from '../types'
 
 const DISCOVERABLE = PLATFORMS.filter(p => p !== 'Outra')
-
-const GRADIENTS = [
-  'linear-gradient(150deg,#7f1d1d 0%,#dc2626 100%)',
-  'linear-gradient(150deg,#0c4a6e 0%,#0891b2 100%)',
-  'linear-gradient(150deg,#082f49 0%,#2563eb 100%)',
-  'linear-gradient(150deg,#422006 0%,#d97706 100%)',
-  'linear-gradient(150deg,#1e1b4b 0%,#4f46e5 100%)',
-  'linear-gradient(150deg,#14532d 0%,#16a34a 100%)',
-]
-function showGradient(show: TMDBShow) {
-  return GRADIENTS[(show.name.charCodeAt(0) ?? 0) % GRADIENTS.length]
-}
 
 export default function Discover() {
   const [platform, setPlatform] = useState<Platform>(DISCOVERABLE[0])
@@ -92,8 +82,7 @@ export default function Discover() {
           />
           {isBusy && searchInput.length > 0 && (
             <div style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-              <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
-              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+              <Spinner size={16} />
             </div>
           )}
         </div>
@@ -127,7 +116,7 @@ export default function Discover() {
         {/* Full-page spinner — only when no results yet */}
         {loading && shows.length === 0 && (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+            <Spinner />
           </div>
         )}
 
@@ -171,7 +160,7 @@ export default function Discover() {
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
-                    <div style={{ position: 'absolute', inset: 0, background: showGradient(show) }} />
+                    <div style={{ position: 'absolute', inset: 0, background: seriesGradient(show.name) }} />
                   )}
                 </div>
 

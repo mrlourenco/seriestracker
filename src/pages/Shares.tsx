@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Layout from '../components/Layout'
+import Spinner from '../components/Spinner'
 import { useShares } from '../hooks/useShares'
 
 export default function Shares() {
@@ -61,8 +62,7 @@ export default function Shares() {
 
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            <Spinner size={28} />
           </div>
         ) : (
           <>

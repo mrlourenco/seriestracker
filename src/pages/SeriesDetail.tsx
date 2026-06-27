@@ -1,38 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import Layout from '../components/Layout'
+import Spinner from '../components/Spinner'
 import { useSeries } from '../hooks/useSeries'
 import { useAuth } from '../hooks/useAuth'
-import type { Series, SeriesStatus } from '../types'
+import { seriesGradient } from '../lib/gradients'
+import { STATUS_BADGE } from '../lib/statusBadge'
+import type { Series } from '../types'
 import { STATUS_LABELS } from '../types'
-
-const GRADIENTS = [
-  'linear-gradient(150deg,#7f1d1d 0%,#dc2626 100%)',
-  'linear-gradient(150deg,#0c4a6e 0%,#0891b2 100%)',
-  'linear-gradient(150deg,#082f49 0%,#2563eb 100%)',
-  'linear-gradient(150deg,#422006 0%,#d97706 100%)',
-  'linear-gradient(150deg,#1e1b4b 0%,#4f46e5 100%)',
-  'linear-gradient(150deg,#14532d 0%,#16a34a 100%)',
-]
-
-function seriesGradient(s: Series) {
-  return GRADIENTS[(s.title.charCodeAt(0) ?? 0) % GRADIENTS.length]
-}
-
-const STATUS_BADGE: Record<SeriesStatus, { bg: string; color: string }> = {
-  watching:      { bg: 'rgba(22,163,74,.15)',   color: '#4ade80' },
-  want_to_watch: { bg: 'rgba(251,191,36,.12)',  color: '#fbbf24' },
-  completed:     { bg: 'rgba(96,165,250,.12)',  color: '#60a5fa' },
-  dropped:       { bg: 'rgba(248,113,113,.12)', color: '#f87171' },
-  archived:      { bg: 'rgba(113,113,122,.12)', color: '#9ca3af' },
-}
-
-const Spinner = () => (
-  <>
-    <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #E11D2A', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-    <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-  </>
-)
 
 export default function SeriesDetail() {
   const { id } = useParams<{ id: string }>()
@@ -92,7 +67,7 @@ export default function SeriesDetail() {
             {series.poster_url ? (
               <img src={series.poster_url} alt={series.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <div style={{ position: 'absolute', inset: 0, background: seriesGradient(series) }} />
+              <div style={{ position: 'absolute', inset: 0, background: seriesGradient(series.title) }} />
             )}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -109,7 +84,7 @@ export default function SeriesDetail() {
                 </span>
               )}
             </div>
-            {series.rating && (
+            {series.rating !== null && (
               <p style={{ font: "600 14px 'Hanken Grotesk'", color: '#fbbf24', marginTop: 10 }}>
                 ★ {series.rating}<span style={{ color: '#6b6b73', fontWeight: 400 }}>/10</span>
               </p>
