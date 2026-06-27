@@ -20,13 +20,12 @@ function withoutTMDBId(data: SeriesInsert | SeriesUpdate) {
 function isMissingTMDBIdColumn(error: unknown) {
   if (typeof error !== 'object' || error === null) return false
   const e = error as Record<string, unknown>
-  // Postgres error code 42703 = undefined_column; also verify it mentions tmdb_id
-  // to avoid swallowing unrelated undefined-column errors on the same table.
-  return (
-    e.code === '42703' &&
-    typeof e.message === 'string' &&
-    e.message.toLowerCase().includes('tmdb_id')
-  )
+  const message = typeof e.message === 'string' ? e.message.toLowerCase() : ''
+  // Accept either the Postgres error code 42703 (undefined_column) or the
+  // "does not exist" wording — some PostgREST versions don't surface the code.
+  const byCode = e.code === '42703' && message.includes('tmdb_id')
+  const byMessage = message.includes('tmdb_id') && message.includes('does not exist')
+  return byCode || byMessage
 }
 
 export function useSeries(filters: Filters = {}) {
