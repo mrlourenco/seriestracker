@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { searchTMDBShow } from './useTMDB'
 import type { TMDBShow } from './useTMDB'
@@ -20,10 +20,37 @@ function loadStored(): Recommendation[] {
   }
 }
 
+function saveStored(recs: Recommendation[]) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(recs)) } catch { /* quota */ }
+}
+
+async function fetchOwned(): Promise<Set<string>> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return new Set()
+  const { data } = await supabase
+    .from('series')
+    .select('title')
+    .eq('user_id', session.user.id)
+  return new Set((data ?? []).map(s => s.title.toLowerCase().trim()))
+}
+
 export function useRecommendations() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>(loadStored)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Re-filter stored recommendations against the current series list on mount
+  useEffect(() => {
+    const stored = loadStored()
+    if (stored.length === 0) return
+    fetchOwned().then(owned => {
+      const filtered = stored.filter(rec => !owned.has(rec.title.toLowerCase().trim()))
+      if (filtered.length !== stored.length) {
+        setRecommendations(filtered)
+        saveStored(filtered)
+      }
+    }).catch(() => { /* ignore – will be filtered on next generate */ })
+  }, [])
 
   const generate = async () => {
     setLoading(true)
@@ -61,7 +88,7 @@ export function useRecommendations() {
       ).filter(rec => !owned.has(rec.title.toLowerCase().trim()))
 
       setRecommendations(recs)
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(recs)) } catch { /* quota */ }
+      saveStored(recs)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao gerar recomendações')
     } finally {
