@@ -50,7 +50,10 @@ Responde APENAS com JSON válido, sem markdown nem texto extra:
     const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
     const recs = JSON.parse(cleaned)
 
-    return new Response(JSON.stringify(recs), {
+    const owned = new Set(series.map((s: { title: string }) => s.title.toLowerCase().trim()))
+    const filtered = recs.filter((r: { title: string }) => !owned.has(r.title.toLowerCase().trim()))
+
+    return new Response(JSON.stringify(filtered), {
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   } catch (err) {
