@@ -27,14 +27,6 @@ function withoutColumns<T extends object>(data: T, ...keys: string[]): Partial<T
   return result
 }
 
-function isMissingColumn(error: unknown, column: string) {
-  if (typeof error !== 'object' || error === null) return false
-  const e = error as Record<string, unknown>
-  const code = e.code
-  const message = typeof e.message === 'string' ? e.message.toLowerCase() : ''
-  return (code === '42703' && message.includes(column)) ||
-    (message.includes(column) && message.includes('does not exist'))
-}
 
 export function useSeries(filters: Filters = {}) {
   const [series, setSeries] = useState<Series[]>([])
@@ -79,14 +71,9 @@ export function useSeries(filters: Filters = {}) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Não autenticado')
 
-    const payload = { ...data, user_id: user.id }
+    const payload = { ...withoutColumns(data, 'tmdb_id'), user_id: user.id }
     const { error } = await supabase.from('series').insert(payload)
-
-    if (error) {
-      if (!isMissingColumn(error, 'tmdb_id')) throw pgError(error)
-      const { error: retryError } = await supabase.from('series').insert({ ...withoutColumns(data, 'tmdb_id'), user_id: user.id })
-      if (retryError) throw pgError(retryError)
-    }
+    if (error) throw pgError(error)
 
     await fetchSeries()
   }
