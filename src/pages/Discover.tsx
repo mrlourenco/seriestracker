@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
@@ -6,6 +6,7 @@ import TMDBShowModal from '../components/TMDBShowModal'
 import { seriesGradient } from '../lib/gradients'
 import { useTMDB, useTMDBTrending, TMDB_IMG } from '../hooks/useTMDB'
 import { useRecommendations } from '../hooks/useRecommendations'
+import { supabase } from '../lib/supabase'
 import type { TMDBShow } from '../hooks/useTMDB'
 import type { Platform, SeriesInsert } from '../types'
 import { PLATFORMS } from '../types'
@@ -26,9 +27,10 @@ interface ShowCardProps {
   onSelect: (show: TMDBShow) => void
   onAdd: (show: TMDBShow) => void
   note?: string
+  owned?: boolean
 }
 
-function ShowCard({ show, index, onSelect, onAdd, note }: ShowCardProps) {
+function ShowCard({ show, index, onSelect, onAdd, note, owned }: ShowCardProps) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 13px', borderRadius: 15, background: '#131318', border: '1px solid #20202a' }}>
       {index !== undefined && (
@@ -54,8 +56,20 @@ function ShowCard({ show, index, onSelect, onAdd, note }: ShowCardProps) {
         }
         <span style={{ font: "600 11px 'Hanken Grotesk'", color: '#E11D2A', marginTop: 4, display: 'block' }}>Ver detalhe</span>
       </button>
-      <button onClick={() => onAdd(show)} title={`Adicionar "${show.name}"`} style={{ flexShrink: 0, width: 34, height: 34, borderRadius: 10, background: '#E11D2A', color: '#fff', font: "700 20px 'Hanken Grotesk'", lineHeight: 1, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        +
+      <button
+        onClick={() => !owned && onAdd(show)}
+        title={owned ? 'Já na tua lista' : `Adicionar "${show.name}"`}
+        style={{
+          flexShrink: 0, width: 34, height: 34, borderRadius: 10,
+          background: owned ? '#1e1e26' : '#E11D2A',
+          color: owned ? '#3f3f46' : '#fff',
+          font: "700 18px 'Hanken Grotesk'", lineHeight: 1,
+          border: owned ? '1px solid #2a2a32' : 'none',
+          cursor: owned ? 'default' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        {owned ? '✓' : '+'}
       </button>
     </div>
   )
@@ -67,12 +81,23 @@ export default function Discover() {
   const [searchInput, setSearchInput] = useState('')
   const [query, setQuery] = useState('')
   const [selectedShow, setSelectedShow] = useState<TMDBShow | null>(null)
+  const [ownedTitles, setOwnedTitles] = useState<Set<string>>(new Set())
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const navigate = useNavigate()
 
   const { shows, loading, error, hasMore, loadMore } = useTMDB(platform, query)
   const trending = useTMDBTrending()
   const recs = useRecommendations()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return
+      const { data } = await supabase.from('series').select('title').eq('user_id', session.user.id)
+      setOwnedTitles(new Set((data ?? []).map(s => s.title.toLowerCase().trim())))
+    })
+  }, [])
+
+  const isOwned = useMemo(() => (name: string) => ownedTitles.has(name.toLowerCase().trim()), [ownedTitles])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -87,6 +112,7 @@ export default function Discover() {
   const isBusy = isTyping || loading
 
   function handleAdd(show: TMDBShow) {
+    if (isOwned(show.name)) return
     const prefill: SeriesInsert = {
       title: show.name,
       poster_url: show.poster_path ? `${TMDB_IMG}/w500${show.poster_path}` : null,
@@ -178,7 +204,7 @@ export default function Discover() {
                     : <>Top <span style={{ color: '#d4d4d8', fontWeight: 600 }}>{platform}</span> · disponível em Portugal · por popularidade</>
                   }
                 </p>
-                {shows.map((show, i) => <ShowCard key={show.id} show={show} index={i} onSelect={setSelectedShow} onAdd={handleAdd} />)}
+                {shows.map((show, i) => <ShowCard key={show.id} show={show} index={i} onSelect={setSelectedShow} onAdd={handleAdd} owned={isOwned(show.name)} />)}
                 {shows.length === 0 && !loading && (
                   <div style={{ textAlign: 'center', padding: '48px 0' }}>
                     <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73' }}>
@@ -206,7 +232,7 @@ export default function Discover() {
                 <p style={{ font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
                   Top <span style={{ color: '#d4d4d8', fontWeight: 600 }}>mundial</span> esta semana · via TMDB
                 </p>
-                {trending.shows.map((show, i) => <ShowCard key={show.id} show={show} index={i} onSelect={setSelectedShow} onAdd={handleAdd} />)}
+                {trending.shows.map((show, i) => <ShowCard key={show.id} show={show} index={i} onSelect={setSelectedShow} onAdd={handleAdd} owned={isOwned(show.name)} />)}
               </div>
             )}
           </>
@@ -254,7 +280,7 @@ export default function Discover() {
                 </div>
                 {recs.recommendations.map((rec, i) =>
                   rec.show
-                    ? <ShowCard key={i} show={rec.show} onSelect={setSelectedShow} onAdd={handleAdd} note={rec.reason} />
+                    ? <ShowCard key={i} show={rec.show} onSelect={setSelectedShow} onAdd={handleAdd} note={rec.reason} owned={isOwned(rec.show.name)} />
                     : (
                       <div key={i} style={{ padding: '12px 16px', borderRadius: 15, background: '#131318', border: '1px solid #20202a' }}>
                         <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5' }}>{rec.title}</div>
