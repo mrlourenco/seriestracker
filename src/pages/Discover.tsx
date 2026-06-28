@@ -215,7 +215,7 @@ export default function Discover() {
         {/* ── Para ti tab ── */}
         {tab === 'foryou' && (
           <>
-            {recs.recommendations.length === 0 && !recs.loading && (
+            {recs.recommendations.length === 0 && !recs.loading && !recs.error && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '40px 0' }}>
                 <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73', textAlign: 'center' }}>
                   A IA analisa o que viste e os teus ratings para sugerir séries que podes gostar.
@@ -229,7 +229,7 @@ export default function Discover() {
               </div>
             )}
 
-            {recs.loading && (
+            {recs.recommendations.length === 0 && recs.loading && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '48px 0' }}>
                 <Spinner />
                 <p style={{ font: "500 13px 'Hanken Grotesk'", color: '#6b6b73' }}>A analisar as tuas séries...</p>
@@ -239,15 +239,18 @@ export default function Discover() {
             {recs.error && <ErrorBox message={recs.error} />}
 
             {recs.recommendations.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, opacity: recs.loading ? 0.5 : 1, transition: 'opacity 0.2s', pointerEvents: recs.loading ? 'none' : 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <p style={{ font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
-                    Recomendado pela <span style={{ color: '#a78bfa', fontWeight: 600 }}>IA</span> com base nos teus gostos
+                    {recs.loading
+                      ? <span style={{ color: '#a78bfa' }}>A gerar novas recomendações...</span>
+                      : <>Recomendado pela <span style={{ color: '#a78bfa', fontWeight: 600 }}>IA</span> com base nos teus gostos</>
+                    }
                   </p>
                   <button
                     onClick={recs.generate}
                     disabled={recs.loading}
-                    style={{ background: 'none', border: '1px solid #26262e', color: '#b4b4bd', font: "600 11px 'Hanken Grotesk'", padding: '5px 12px', borderRadius: 8, cursor: 'pointer' }}
+                    style={{ background: 'none', border: '1px solid #26262e', color: '#b4b4bd', font: "600 11px 'Hanken Grotesk'", padding: '5px 12px', borderRadius: 8, cursor: recs.loading ? 'default' : 'pointer', opacity: recs.loading ? 0.4 : 1 }}
                   >
                     Gerar de novo
                   </button>
