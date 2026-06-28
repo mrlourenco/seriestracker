@@ -26,9 +26,8 @@ export function useRecommendations() {
         .from('series')
         .select('title, status, rating')
         .eq('user_id', session.user.id)
-        .in('status', ['watching', 'completed', 'want_to_watch'])
         .order('rating', { ascending: false, nullsFirst: false })
-        .limit(40)
+        .limit(60)
 
       const { data, error: fnError } = await supabase.functions.invoke('recomendation', {
         body: { series: seriesData ?? [] },

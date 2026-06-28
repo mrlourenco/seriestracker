@@ -20,10 +20,13 @@ serve(async (req) => {
       ? series.map(s => `- ${s.title}${s.rating != null ? ` (nota ${s.rating}/10)` : ''} [${s.status}]`).join('\n')
       : '(sem séries ainda)'
 
-    const prompt = `És um especialista em séries de televisão. O utilizador tem ou viu estas séries:
+    const prompt = `És um especialista em séries de televisão. O utilizador tem estas séries na sua lista:
 ${list}
 
-Recomenda 6 séries que este utilizador possa gostar. Considera o rating (nota mais alta = gostou mais) e os géneros implícitos. Se não houver séries suficientes, recomenda séries de grande qualidade.
+Recomenda 6 séries NOVAS que este utilizador possa gostar. Regras obrigatórias:
+- NÃO recomandes nenhuma série que já esteja na lista acima, independentemente do status.
+- Usa o rating (nota mais alta = gostou mais) e os géneros implícitos para inferir os gostos do utilizador.
+- Se não houver séries suficientes para inferir gostos, recomenda séries de grande qualidade reconhecidas.
 
 Responde APENAS com JSON válido, sem markdown nem texto extra:
 [{"title":"título original em inglês","reason":"motivo curto em português, 1 frase"}]`
