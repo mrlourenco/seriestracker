@@ -35,6 +35,7 @@ Responde APENAS com JSON válido, sem markdown nem texto extra:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
         }),
       }
     )
