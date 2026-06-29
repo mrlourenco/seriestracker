@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
@@ -57,6 +57,7 @@ function ShowCard({ show, index, onSelect, onAdd, note, owned }: ShowCardProps) 
         <span style={{ font: "600 11px 'Hanken Grotesk'", color: '#E11D2A', marginTop: 4, display: 'block' }}>Ver detalhe</span>
       </button>
       <button
+        type="button"
         onClick={() => !owned && onAdd(show)}
         title={owned ? 'Já na tua lista' : `Adicionar "${show.name}"`}
         style={{
@@ -89,15 +90,23 @@ export default function Discover() {
   const trending = useTMDBTrending()
   const recs = useRecommendations()
 
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+  const refreshOwned = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
-      const { data } = await supabase.from('series').select('title').eq('user_id', session.user.id)
-      setOwnedTitles(new Set((data ?? []).map(s => s.title.toLowerCase().trim())))
-    })
+      const { data, error: qErr } = await supabase.from('series').select('title').eq('user_id', session.user.id)
+      if (!qErr && data) setOwnedTitles(new Set(data.map(s => s.title.toLowerCase().trim())))
+    } catch { /* best-effort: ownership indicators simply won't show */ }
   }, [])
 
-  const isOwned = useMemo(() => (name: string) => ownedTitles.has(name.toLowerCase().trim()), [ownedTitles])
+  useEffect(() => {
+    refreshOwned()
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshOwned() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [refreshOwned])
+
+  const isOwned = useCallback((name: string) => ownedTitles.has(name.toLowerCase().trim()), [ownedTitles])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
