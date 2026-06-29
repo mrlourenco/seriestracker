@@ -52,7 +52,7 @@ export default function SeriesCard({ series, ownerName }: Props) {
                 {series.current_episode !== null && `Ep ${series.current_episode}`}
               </span>
             )}
-            {series.rating !== null && <span>★ {series.rating}/10</span>}
+            {series.rating !== null && <span style={{ color: '#fbbf24', fontWeight: 600 }}>★ {series.rating}/10</span>}
           </div>
         )}
       </div>
