@@ -82,7 +82,7 @@ export default function Discover() {
   const [searchInput, setSearchInput] = useState('')
   const [query, setQuery] = useState('')
   const [selectedShow, setSelectedShow] = useState<TMDBShow | null>(null)
-  const [ownedTitles, setOwnedTitles] = useState<Set<string>>(new Set())
+  const [owned, setOwned] = useState<Map<string, string>>(new Map())
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const navigate = useNavigate()
 
@@ -94,8 +94,8 @@ export default function Discover() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data, error: qErr } = await supabase.from('series').select('title').eq('user_id', user.id)
-      if (!qErr && data) setOwnedTitles(new Set(data.map(s => s.title.toLowerCase().trim())))
+      const { data, error: qErr } = await supabase.from('series').select('id, title').eq('user_id', user.id)
+      if (!qErr && data) setOwned(new Map(data.map(s => [s.title.toLowerCase().trim(), s.id])))
     } catch { /* best-effort: ownership indicators simply won't show */ }
   }, [])
 
@@ -106,7 +106,14 @@ export default function Discover() {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [refreshOwned])
 
-  const isOwned = useCallback((name: string) => ownedTitles.has(name.toLowerCase().trim()), [ownedTitles])
+  const isOwned = useCallback((name: string) => owned.has(name.toLowerCase().trim()), [owned])
+  const ownedId = useCallback((name: string) => owned.get(name.toLowerCase().trim()), [owned])
+
+  const handleRemove = useCallback(async (id: string) => {
+    await supabase.from('series').delete().eq('id', id)
+    await refreshOwned()
+    setSelectedShow(null)
+  }, [refreshOwned])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -308,7 +315,13 @@ export default function Discover() {
       </div>
 
       {selectedShow && (
-        <TMDBShowModal show={selectedShow} onClose={() => setSelectedShow(null)} onAdd={handleAdd} />
+        <TMDBShowModal
+          show={selectedShow}
+          onClose={() => setSelectedShow(null)}
+          onAdd={handleAdd}
+          ownedId={ownedId(selectedShow.name)}
+          onRemove={handleRemove}
+        />
       )}
     </Layout>
   )
