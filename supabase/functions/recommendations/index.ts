@@ -9,8 +9,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
-    const { series } = await req.json() as {
+    const { series, genres } = await req.json() as {
       series: Array<{ title: string; status: string; rating: number | null }>
+      genres?: string[]
     }
 
     const apiKey = Deno.env.get('GEMINI_API_KEY')
@@ -20,12 +21,16 @@ serve(async (req) => {
       ? series.map(s => `- ${s.title}${s.rating != null ? ` (nota ${s.rating}/10)` : ''} [${s.status}]`).join('\n')
       : '(sem séries ainda)'
 
+    const genreConstraint = genres?.length
+      ? `- O utilizador quer especificamente séries do(s) género(s): ${genres.join(', ')}. TODAS as recomendações devem pertencer a pelo menos um desses géneros.`
+      : '- Usa o rating (nota mais alta = gostou mais) e os géneros implícitos para inferir os gostos do utilizador.'
+
     const prompt = `És um especialista em séries de televisão. O utilizador tem estas séries na sua lista:
 ${list}
 
 Recomenda 6 séries NOVAS que este utilizador possa gostar. Regras obrigatórias:
 - NÃO recomandes nenhuma série que já esteja na lista acima, independentemente do status.
-- Usa o rating (nota mais alta = gostou mais) e os géneros implícitos para inferir os gostos do utilizador.
+${genreConstraint}
 - Se não houver séries suficientes para inferir gostos, recomenda séries de grande qualidade reconhecidas.
 
 Responde APENAS com JSON válido, sem markdown nem texto extra:

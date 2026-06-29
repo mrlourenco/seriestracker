@@ -15,6 +15,8 @@ type Tab = 'browse' | 'trending' | 'foryou'
 
 const DISCOVERABLE = PLATFORMS.filter(p => p !== 'Outra')
 
+const GENRES = ['Drama', 'Comédia', 'Thriller', 'Crime', 'Ação', 'Ficção Científica', 'Fantasia', 'Romance', 'Documentário', 'Terror', 'Mistério', 'Aventura']
+
 const TABS: { id: Tab; label: string }[] = [
   { id: 'browse', label: 'Plataformas' },
   { id: 'trending', label: 'Top Global' },
@@ -83,6 +85,7 @@ export default function Discover() {
   const [query, setQuery] = useState('')
   const [selectedShow, setSelectedShow] = useState<TMDBShow | null>(null)
   const [owned, setOwned] = useState<Map<string, string>>(new Map())
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([])
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const navigate = useNavigate()
 
@@ -257,13 +260,38 @@ export default function Discover() {
         {/* ── Para ti tab ── */}
         {tab === 'foryou' && (
           <>
+            {/* Genre picker */}
+            <div>
+              <p style={{ font: "500 11px 'Hanken Grotesk'", color: '#6b6b73', marginBottom: 8 }}>Filtrar por género <span style={{ color: '#3f3f46' }}>(opcional)</span></p>
+              <div className="noscroll" style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+                {GENRES.map(g => {
+                  const active = selectedGenres.includes(g)
+                  return (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setSelectedGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
+                      style={{
+                        flexShrink: 0, padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                        background: active ? '#E11D2A' : '#1e1e26',
+                        color: active ? '#fff' : '#9ca3af',
+                        font: "600 12px 'Hanken Grotesk'",
+                      }}
+                    >
+                      {g}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             {recs.recommendations.length === 0 && !recs.loading && !recs.error && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '40px 0' }}>
                 <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73', textAlign: 'center' }}>
                   A IA analisa o que viste e os teus ratings para sugerir séries que podes gostar.
                 </p>
                 <button
-                  onClick={recs.generate}
+                  onClick={() => recs.generate(selectedGenres.length ? selectedGenres : undefined)}
                   style={{ background: '#E11D2A', color: '#fff', font: "700 14px 'Hanken Grotesk'", padding: '12px 28px', borderRadius: 12, border: 'none', cursor: 'pointer' }}
                 >
                   Gerar recomendações
@@ -290,7 +318,7 @@ export default function Discover() {
                     }
                   </p>
                   <button
-                    onClick={recs.generate}
+                    onClick={() => recs.generate(selectedGenres.length ? selectedGenres : undefined)}
                     disabled={recs.loading}
                     style={{ background: 'none', border: '1px solid #26262e', color: '#b4b4bd', font: "600 11px 'Hanken Grotesk'", padding: '5px 12px', borderRadius: 8, cursor: recs.loading ? 'default' : 'pointer', opacity: recs.loading ? 0.4 : 1 }}
                   >

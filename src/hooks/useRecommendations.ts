@@ -55,7 +55,7 @@ export function useRecommendations() {
     }).catch(() => { /* ignore – will be filtered on next generate */ })
   }, [])
 
-  const generate = async () => {
+  const generate = async (genres?: string[]) => {
     setLoading(true)
     setError(null)
     try {
@@ -70,7 +70,7 @@ export function useRecommendations() {
         .limit(60)
 
       const { data, error: fnError } = await supabase.functions.invoke('recomendation', {
-        body: { series: seriesData ?? [] },
+        body: { series: seriesData ?? [], genres: genres?.length ? genres : undefined },
       })
       if (fnError) {
         const body = await (fnError as { context?: Response }).context?.json?.().catch(() => null)
