@@ -92,9 +92,9 @@ export default function Discover() {
 
   const refreshOwned = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const { data, error: qErr } = await supabase.from('series').select('title').eq('user_id', session.user.id)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data, error: qErr } = await supabase.from('series').select('title').eq('user_id', user.id)
       if (!qErr && data) setOwnedTitles(new Set(data.map(s => s.title.toLowerCase().trim())))
     } catch { /* best-effort: ownership indicators simply won't show */ }
   }, [])
