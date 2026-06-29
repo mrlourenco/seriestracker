@@ -7,6 +7,7 @@ interface Props {
   show: TMDBShow
   onClose: () => void
   onAdd: (show: TMDBShow) => void
+  owned?: boolean
 }
 
 function translateStatus(status?: string) {
@@ -21,7 +22,7 @@ function translateStatus(status?: string) {
   return status ? map[status] ?? status : null
 }
 
-export default function TMDBShowModal({ show, onClose, onAdd }: Props) {
+export default function TMDBShowModal({ show, onClose, onAdd, owned }: Props) {
   const [detail, setDetail] = useState<TMDBShowDetail | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -112,9 +113,17 @@ export default function TMDBShowModal({ show, onClose, onAdd }: Props) {
           Abrir no TMDB
         </a>
 
-        <button type="button" onClick={() => onAdd(show)} className="btn-primary w-full">
-          Adicionar à lista
-        </button>
+        {owned
+          ? (
+            <button type="button" disabled style={{ width: '100%', padding: '12px', borderRadius: 12, background: '#1e1e26', border: '1px solid #2a2a32', color: '#6b6b73', font: "600 14px 'Hanken Grotesk'", cursor: 'default' }}>
+              ✓ Na lista
+            </button>
+          ) : (
+            <button type="button" onClick={() => onAdd(show)} className="btn-primary w-full">
+              Adicionar à lista
+            </button>
+          )
+        }
       </div>
     </div>
   )

@@ -305,7 +305,7 @@ export default function Discover() {
       </div>
 
       {selectedShow && (
-        <TMDBShowModal show={selectedShow} onClose={() => setSelectedShow(null)} onAdd={handleAdd} />
+        <TMDBShowModal show={selectedShow} onClose={() => setSelectedShow(null)} onAdd={handleAdd} owned={isOwned(selectedShow.name)} />
       )}
     </Layout>
   )
