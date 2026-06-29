@@ -7,7 +7,8 @@ interface Props {
   show: TMDBShow
   onClose: () => void
   onAdd: (show: TMDBShow) => void
-  owned?: boolean
+  ownedId?: string
+  onRemove?: (id: string) => void
 }
 
 function translateStatus(status?: string) {
@@ -22,7 +23,7 @@ function translateStatus(status?: string) {
   return status ? map[status] ?? status : null
 }
 
-export default function TMDBShowModal({ show, onClose, onAdd, owned }: Props) {
+export default function TMDBShowModal({ show, onClose, onAdd, ownedId, onRemove }: Props) {
   const [detail, setDetail] = useState<TMDBShowDetail | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -113,10 +114,10 @@ export default function TMDBShowModal({ show, onClose, onAdd, owned }: Props) {
           Abrir no TMDB
         </a>
 
-        {owned
+        {ownedId
           ? (
-            <button type="button" disabled style={{ width: '100%', padding: '12px', borderRadius: 12, background: '#1e1e26', border: '1px solid #2a2a32', color: '#6b6b73', font: "600 14px 'Hanken Grotesk'", cursor: 'default' }}>
-              ✓ Na lista
+            <button type="button" onClick={() => onRemove?.(ownedId)} style={{ width: '100%', padding: '12px', borderRadius: 12, background: 'rgba(127,29,29,.2)', border: '1px solid #7f1d1d', color: '#fca5a5', font: "600 14px 'Hanken Grotesk'", cursor: 'pointer' }}>
+              Remover da lista
             </button>
           ) : (
             <button type="button" onClick={() => onAdd(show)} className="btn-primary w-full">
