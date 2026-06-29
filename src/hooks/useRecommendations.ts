@@ -25,12 +25,12 @@ function saveStored(recs: Recommendation[]) {
 }
 
 async function fetchOwned(): Promise<Set<string>> {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return new Set()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return new Set()
   const { data } = await supabase
     .from('series')
     .select('title')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
   return new Set((data ?? []).map(s => s.title.toLowerCase().trim()))
 }
 
@@ -44,7 +44,10 @@ export function useRecommendations() {
     const stored = loadStored()
     if (stored.length === 0) return
     fetchOwned().then(owned => {
-      const filtered = stored.filter(rec => !owned.has(rec.title.toLowerCase().trim()))
+      const isOwned = (rec: Recommendation) =>
+        owned.has(rec.title.toLowerCase().trim()) ||
+        owned.has((rec.show?.name ?? '').toLowerCase().trim())
+      const filtered = stored.filter(rec => !isOwned(rec))
       if (filtered.length !== stored.length) {
         setRecommendations(filtered)
         saveStored(filtered)
@@ -56,13 +59,13 @@ export function useRecommendations() {
     setLoading(true)
     setError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Não autenticado')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Não autenticado')
 
       const { data: seriesData } = await supabase
         .from('series')
         .select('title, status, rating')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .order('rating', { ascending: false, nullsFirst: false })
         .limit(60)
 
@@ -75,7 +78,10 @@ export function useRecommendations() {
       }
       if (data?.error) throw new Error(data.error)
 
-      const owned = new Set((seriesData ?? []).map(s => s.title.toLowerCase().trim()))
+      const ownedTitles = new Set((seriesData ?? []).map(s => s.title.toLowerCase().trim()))
+      const isOwned = (rec: Recommendation) =>
+        ownedTitles.has(rec.title.toLowerCase().trim()) ||
+        ownedTitles.has((rec.show?.name ?? '').toLowerCase().trim())
 
       const recs: Recommendation[] = (
         await Promise.all(
@@ -85,7 +91,7 @@ export function useRecommendations() {
             show: await searchTMDBShow(rec.title).catch(() => null),
           }))
         )
-      ).filter(rec => !owned.has(rec.title.toLowerCase().trim()))
+      ).filter(rec => !isOwned(rec))
 
       setRecommendations(recs)
       saveStored(recs)

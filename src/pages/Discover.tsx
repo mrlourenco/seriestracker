@@ -297,16 +297,18 @@ export default function Discover() {
                     Gerar de novo
                   </button>
                 </div>
-                {recs.recommendations.map((rec, i) =>
-                  rec.show
-                    ? <ShowCard key={i} show={rec.show} onSelect={setSelectedShow} onAdd={handleAdd} note={rec.reason} owned={isOwned(rec.show.name)} />
-                    : (
-                      <div key={i} style={{ padding: '12px 16px', borderRadius: 15, background: '#131318', border: '1px solid #20202a' }}>
-                        <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5' }}>{rec.title}</div>
-                        <div style={{ font: "500 12px 'Hanken Grotesk'", color: '#a78bfa', marginTop: 4 }}>{rec.reason}</div>
-                      </div>
-                    )
-                )}
+                {recs.recommendations
+                  .filter(rec => !isOwned(rec.show?.name ?? rec.title))
+                  .map((rec, i) =>
+                    rec.show
+                      ? <ShowCard key={i} show={rec.show} onSelect={setSelectedShow} onAdd={handleAdd} note={rec.reason} owned={false} />
+                      : (
+                        <div key={i} style={{ padding: '12px 16px', borderRadius: 15, background: '#131318', border: '1px solid #20202a' }}>
+                          <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5' }}>{rec.title}</div>
+                          <div style={{ font: "500 12px 'Hanken Grotesk'", color: '#a78bfa', marginTop: 4 }}>{rec.reason}</div>
+                        </div>
+                      )
+                  )}
               </div>
             )}
           </>
