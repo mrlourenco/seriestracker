@@ -10,6 +10,14 @@ export interface TMDBShow {
   first_air_date: string
 }
 
+export interface TMDBPerson {
+  id: number
+  name: string
+  profile_path: string | null
+  known_for_department: string
+  known_for: Array<{ id: number; name?: string; title?: string; media_type: string }>
+}
+
 const PROVIDER_IDS: Partial<Record<Platform, number>> = {
   'Netflix': 8,
   'Max': 1899,
@@ -44,6 +52,47 @@ export async function searchTMDBShow(title: string, signal?: AbortSignal, poster
   const data = await response.json() as { results: TMDBShow[] }
   const results = data.results ?? []
   return findMatchingPoster(results, posterUrl) ?? results[0] ?? null
+}
+
+export async function fetchPersonTVShows(personId: number, signal?: AbortSignal): Promise<TMDBShow[]> {
+  const apiKey = getTMDBApiKey()
+  if (!apiKey) return []
+  const res = await fetch(
+    `https://api.themoviedb.org/3/person/${personId}/tv_credits?api_key=${apiKey}&language=pt-PT`,
+    { signal }
+  )
+  if (!res.ok) throw new Error(`TMDB ${res.status}`)
+  const data = await res.json() as { cast: TMDBShow[]; crew: TMDBShow[] }
+  const seen = new Set<number>()
+  return [...(data.cast ?? []), ...(data.crew ?? [])]
+    .filter(s => { if (seen.has(s.id)) return false; seen.add(s.id); return true })
+    .sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0))
+}
+
+export function useTMDBPersonSearch(query: string) {
+  const [persons, setPersons] = useState<TMDBPerson[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const trimmed = query.trim()
+    if (!trimmed) { setPersons([]); setLoading(false); return }
+    const apiKey = getTMDBApiKey()
+    if (!apiKey) { setError('TMDB API key não configurada'); return }
+    const controller = new AbortController()
+    setLoading(true)
+    setError(null)
+    fetch(
+      `https://api.themoviedb.org/3/search/person?api_key=${apiKey}&query=${encodeURIComponent(trimmed)}&language=pt-PT&page=1`,
+      { signal: controller.signal }
+    )
+      .then(r => { if (!r.ok) throw new Error(`TMDB ${r.status}`); return r.json() as Promise<{ results: TMDBPerson[] }> })
+      .then(d => { setPersons(d.results ?? []); setLoading(false) })
+      .catch((e: Error) => { if (e.name !== 'AbortError') { setError(e.message); setLoading(false) } })
+    return () => controller.abort()
+  }, [query])
+
+  return { persons, loading, error }
 }
 
 export function useTMDBTrending() {
