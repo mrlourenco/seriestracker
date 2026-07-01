@@ -57,7 +57,11 @@ export async function searchTMDBShow(title: string, signal?: AbortSignal, poster
 const RELEVANT_CREW_DEPARTMENTS = new Set(['Directing', 'Writing'])
 const RELEVANT_CREW_JOBS = new Set(['Creator', 'Executive Producer'])
 
-export async function fetchPersonTVShows(personId: number, signal?: AbortSignal): Promise<TMDBShow[]> {
+export async function fetchPersonTVShows(
+  personId: number,
+  knownForDepartment?: string,
+  signal?: AbortSignal,
+): Promise<TMDBShow[]> {
   const apiKey = getTMDBApiKey()
   if (!apiKey) return []
   const res = await fetch(
@@ -72,8 +76,13 @@ export async function fetchPersonTVShows(personId: number, signal?: AbortSignal)
   const relevantCrew = (data.crew ?? []).filter(
     s => RELEVANT_CREW_DEPARTMENTS.has(s.department) || RELEVANT_CREW_JOBS.has(s.job)
   )
+  // Only include cast credits for people primarily known as actors; for
+  // directors/writers their cast appearances are usually minor talk show
+  // or documentary cameos rather than proper series.
+  const isActor = !knownForDepartment || knownForDepartment === 'Acting'
+  const castCredits = isActor ? (data.cast ?? []) : []
   const seen = new Set<number>()
-  return [...(data.cast ?? []), ...relevantCrew]
+  return [...castCredits, ...relevantCrew]
     .filter(s => { if (seen.has(s.id)) return false; seen.add(s.id); return true })
     .sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0))
 }

@@ -170,7 +170,7 @@ export default function Discover() {
     const fetchId = ++personFetchRef.current
     setPersonView({ person, shows: [], loadingShows: true })
     try {
-      const tvShows = await fetchPersonTVShows(person.id)
+      const tvShows = await fetchPersonTVShows(person.id, person.known_for_department)
       if (fetchId !== personFetchRef.current) return
       setPersonView({ person, shows: tvShows, loadingShows: false })
     } catch {
