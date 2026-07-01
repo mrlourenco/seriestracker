@@ -1,7 +1,6 @@
-const CACHE_NAME = 'seriestracker-v3'
-const APP_SHELL = [
+const CACHE_NAME = 'seriestracker-v4'
+const STATIC_ASSETS = [
   '/seriestracker/',
-  '/seriestracker/index.html',
   '/seriestracker/icon-192.png',
   '/seriestracker/icon-512.png',
   '/seriestracker/icon-maskable-512.png',
@@ -10,7 +9,7 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   )
   self.skipWaiting()
 })
@@ -30,28 +29,37 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const request = event.request
-
   if (request.method !== 'GET') return
 
+  // Navigation requests (HTML): network-first so the app always loads
+  // the latest index.html, which references the correct hashed JS/CSS.
+  // Fall back to cache only when offline.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+          }
+          return response
+        })
+        .catch(() => caches.match(request).then((cached) => cached ?? caches.match('/seriestracker/')))
+    )
+    return
+  }
+
+  // Static assets (JS/CSS bundles are content-hashed, icons): cache-first.
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) return cachedResponse
-
-      return fetch(request)
-        .then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse
-          }
-
-          const responseToCache = networkResponse.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache))
-          return networkResponse
-        })
-        .catch(() => {
-          if (request.mode === 'navigate') {
-            return caches.match('/seriestracker/index.html')
-          }
-        })
+    caches.match(request).then((cached) => {
+      if (cached) return cached
+      return fetch(request).then((response) => {
+        if (response.ok && response.type === 'basic') {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+        }
+        return response
+      })
     })
   )
 })
