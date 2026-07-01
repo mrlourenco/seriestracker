@@ -84,7 +84,7 @@ interface PersonCardProps {
 }
 
 function PersonCard({ person, onSelect }: PersonCardProps) {
-  const knownFor = person.known_for.filter(k => k.media_type === 'tv').slice(0, 3).map(k => k.name ?? k.title).filter(Boolean).join(', ')
+  const knownFor = person.known_for.slice(0, 3).map(k => k.name ?? k.title).filter(Boolean).join(', ')
   return (
     <button
       type="button"
@@ -95,7 +95,7 @@ function PersonCard({ person, onSelect }: PersonCardProps) {
         {person.profile_path
           ? <img src={`${TMDB_IMG}/w185${person.profile_path}`} alt={person.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', font: "700 18px 'Hanken Grotesk'", color: '#3f3f46' }}>
-              {person.name[0]}
+              {person.name?.[0] ?? '?'}
             </div>
         }
       </div>
@@ -119,6 +119,7 @@ export default function Discover() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([])
   const [searchMode, setSearchMode] = useState<'shows' | 'people'>('shows')
   const [personView, setPersonView] = useState<{ person: TMDBPerson; shows: TMDBShow[]; loadingShows: boolean } | null>(null)
+  const personFetchRef = useRef(0)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const navigate = useNavigate()
 
@@ -166,11 +167,14 @@ export default function Discover() {
   const isBusy = isTyping || loading
 
   async function handleSelectPerson(person: TMDBPerson) {
+    const fetchId = ++personFetchRef.current
     setPersonView({ person, shows: [], loadingShows: true })
     try {
       const tvShows = await fetchPersonTVShows(person.id)
+      if (fetchId !== personFetchRef.current) return
       setPersonView({ person, shows: tvShows, loadingShows: false })
     } catch {
+      if (fetchId !== personFetchRef.current) return
       setPersonView({ person, shows: [], loadingShows: false })
     }
   }
