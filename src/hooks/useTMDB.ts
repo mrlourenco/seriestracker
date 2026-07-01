@@ -55,7 +55,7 @@ export async function searchTMDBShow(title: string, signal?: AbortSignal, poster
 }
 
 const RELEVANT_CREW_DEPARTMENTS = new Set(['Directing', 'Writing'])
-const RELEVANT_CREW_JOBS = new Set(['Creator', 'Showrunner'])
+const RELEVANT_CREW_JOBS = new Set(['Creator', 'Executive Producer'])
 
 export async function fetchPersonTVShows(personId: number, signal?: AbortSignal): Promise<TMDBShow[]> {
   const apiKey = getTMDBApiKey()
