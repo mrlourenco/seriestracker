@@ -1,5 +1,6 @@
 const CACHE_NAME = 'seriestracker-v4'
 const STATIC_ASSETS = [
+  '/seriestracker/',
   '/seriestracker/icon-192.png',
   '/seriestracker/icon-512.png',
   '/seriestracker/icon-maskable-512.png',
