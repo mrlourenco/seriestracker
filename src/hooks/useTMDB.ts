@@ -54,6 +54,9 @@ export async function searchTMDBShow(title: string, signal?: AbortSignal, poster
   return findMatchingPoster(results, posterUrl) ?? results[0] ?? null
 }
 
+const RELEVANT_CREW_DEPARTMENTS = new Set(['Directing', 'Writing'])
+const RELEVANT_CREW_JOBS = new Set(['Creator', 'Executive Producer'])
+
 export async function fetchPersonTVShows(personId: number, signal?: AbortSignal): Promise<TMDBShow[]> {
   const apiKey = getTMDBApiKey()
   if (!apiKey) return []
@@ -62,9 +65,15 @@ export async function fetchPersonTVShows(personId: number, signal?: AbortSignal)
     { signal }
   )
   if (!res.ok) throw new Error(`TMDB ${res.status}`)
-  const data = await res.json() as { cast: TMDBShow[]; crew: TMDBShow[] }
+  const data = await res.json() as {
+    cast: TMDBShow[]
+    crew: Array<TMDBShow & { department: string; job: string }>
+  }
+  const relevantCrew = (data.crew ?? []).filter(
+    s => RELEVANT_CREW_DEPARTMENTS.has(s.department) || RELEVANT_CREW_JOBS.has(s.job)
+  )
   const seen = new Set<number>()
-  return [...(data.cast ?? []), ...(data.crew ?? [])]
+  return [...(data.cast ?? []), ...relevantCrew]
     .filter(s => { if (seen.has(s.id)) return false; seen.add(s.id); return true })
     .sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0))
 }
