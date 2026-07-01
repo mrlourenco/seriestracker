@@ -4,10 +4,10 @@ import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
 import TMDBShowModal from '../components/TMDBShowModal'
 import { seriesGradient } from '../lib/gradients'
-import { useTMDB, useTMDBTrending, TMDB_IMG } from '../hooks/useTMDB'
+import { useTMDB, useTMDBTrending, useTMDBPersonSearch, fetchPersonTVShows, TMDB_IMG } from '../hooks/useTMDB'
 import { useRecommendations } from '../hooks/useRecommendations'
 import { supabase } from '../lib/supabase'
-import type { TMDBShow } from '../hooks/useTMDB'
+import type { TMDBShow, TMDBPerson } from '../hooks/useTMDB'
 import type { Platform, SeriesInsert } from '../types'
 import { PLATFORMS } from '../types'
 
@@ -78,6 +78,37 @@ function ShowCard({ show, index, onSelect, onAdd, note, owned }: ShowCardProps) 
   )
 }
 
+interface PersonCardProps {
+  person: TMDBPerson
+  onSelect: (person: TMDBPerson) => void
+}
+
+function PersonCard({ person, onSelect }: PersonCardProps) {
+  const knownFor = person.known_for.filter(k => k.media_type === 'tv').slice(0, 3).map(k => k.name ?? k.title).filter(Boolean).join(', ')
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(person)}
+      style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 13px', borderRadius: 15, background: '#131318', border: '1px solid #20202a', textAlign: 'left', width: '100%', cursor: 'pointer' }}
+    >
+      <div style={{ flexShrink: 0, width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', background: '#1e1e26' }}>
+        {person.profile_path
+          ? <img src={`${TMDB_IMG}/w185${person.profile_path}`} alt={person.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', font: "700 18px 'Hanken Grotesk'", color: '#3f3f46' }}>
+              {person.name[0]}
+            </div>
+        }
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.name}</div>
+        <div style={{ font: "500 12px 'Hanken Grotesk'", color: '#6b6b73', marginTop: 2 }}>{person.known_for_department}</div>
+        {knownFor && <div style={{ font: "500 11px 'Hanken Grotesk'", color: '#52525b', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Conhecido por: {knownFor}</div>}
+      </div>
+      <span style={{ font: "600 11px 'Hanken Grotesk'", color: '#E11D2A', flexShrink: 0 }}>Ver séries →</span>
+    </button>
+  )
+}
+
 export default function Discover() {
   const [tab, setTab] = useState<Tab>('browse')
   const [platform, setPlatform] = useState<Platform>(DISCOVERABLE[0])
@@ -86,10 +117,13 @@ export default function Discover() {
   const [selectedShow, setSelectedShow] = useState<TMDBShow | null>(null)
   const [owned, setOwned] = useState<Map<string, string>>(new Map())
   const [selectedGenres, setSelectedGenres] = useState<string[]>([])
+  const [searchMode, setSearchMode] = useState<'shows' | 'people'>('shows')
+  const [personView, setPersonView] = useState<{ person: TMDBPerson; shows: TMDBShow[]; loadingShows: boolean } | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const navigate = useNavigate()
 
-  const { shows, loading, error, hasMore, loadMore } = useTMDB(platform, query)
+  const { shows, loading, error, hasMore, loadMore } = useTMDB(platform, searchMode === 'shows' ? query : '')
+  const personSearch = useTMDBPersonSearch(searchMode === 'people' ? query : '')
   const trending = useTMDBTrending()
   const recs = useRecommendations()
 
@@ -125,10 +159,21 @@ export default function Discover() {
   }, [searchInput])
 
   useEffect(() => { setSelectedShow(null) }, [query, platform, tab])
+  useEffect(() => { setPersonView(null) }, [query, searchMode, tab])
 
   const isTyping = searchInput !== query
   const isSearching = query.trim().length > 0
   const isBusy = isTyping || loading
+
+  async function handleSelectPerson(person: TMDBPerson) {
+    setPersonView({ person, shows: [], loadingShows: true })
+    try {
+      const tvShows = await fetchPersonTVShows(person.id)
+      setPersonView({ person, shows: tvShows, loadingShows: false })
+    } catch {
+      setPersonView({ person, shows: [], loadingShows: false })
+    }
+  }
 
   function handleAdd(show: TMDBShow) {
     if (isOwned(show.name)) return
@@ -189,52 +234,128 @@ export default function Discover() {
         {/* ── Plataformas tab ── */}
         {tab === 'browse' && (
           <>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="search"
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
-                placeholder="Pesquisar séries..."
-                style={{ width: '100%', boxSizing: 'border-box', background: '#131318', border: '1px solid #26262e', borderRadius: 12, color: '#f3f3f5', font: "500 15px 'Hanken Grotesk'", padding: '12px 40px 12px 14px', outline: 'none' }}
-              />
-              {isBusy && searchInput.length > 0 && (
-                <div style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                  <Spinner size={16} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="search"
+                  value={searchInput}
+                  onChange={e => setSearchInput(e.target.value)}
+                  placeholder={searchMode === 'people' ? 'Pesquisar ator, realizador...' : 'Pesquisar séries...'}
+                  style={{ width: '100%', boxSizing: 'border-box', background: '#131318', border: '1px solid #26262e', borderRadius: 12, color: '#f3f3f5', font: "500 15px 'Hanken Grotesk'", padding: '12px 40px 12px 14px', outline: 'none' }}
+                />
+                {(isBusy || personSearch.loading) && searchInput.length > 0 && (
+                  <div style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <Spinner size={16} />
+                  </div>
+                )}
+              </div>
+
+              {/* Search mode toggle — visible only when typing */}
+              {searchInput.length > 0 && (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {(['shows', 'people'] as const).map(mode => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setSearchMode(mode)}
+                      style={{
+                        padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                        background: searchMode === mode ? '#E11D2A' : '#1e1e26',
+                        color: searchMode === mode ? '#fff' : '#9ca3af',
+                        font: "600 12px 'Hanken Grotesk'",
+                      }}
+                    >
+                      {mode === 'shows' ? 'Séries' : 'Pessoas'}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
 
-            <div className="noscroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', opacity: isSearching ? 0.4 : 1, pointerEvents: isSearching ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
-              {DISCOVERABLE.map(p => (
-                <button key={p} onClick={() => setPlatform(p)} style={{ flexShrink: 0, background: platform === p ? '#E11D2A' : '#16161b', color: platform === p ? '#fff' : '#b4b4bd', font: "600 12px 'Hanken Grotesk'", padding: '7px 14px', borderRadius: 999, border: platform === p ? 'none' : '1px solid #26262e', cursor: 'pointer' }}>
-                  {p}
-                </button>
-              ))}
-            </div>
+            {/* Platform selector — hidden when searching people or viewing person */}
+            {searchMode === 'shows' && (
+              <div className="noscroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', opacity: isSearching ? 0.4 : 1, pointerEvents: isSearching ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
+                {DISCOVERABLE.map(p => (
+                  <button key={p} onClick={() => setPlatform(p)} style={{ flexShrink: 0, background: platform === p ? '#E11D2A' : '#16161b', color: platform === p ? '#fff' : '#b4b4bd', font: "600 12px 'Hanken Grotesk'", padding: '7px 14px', borderRadius: 999, border: platform === p ? 'none' : '1px solid #26262e', cursor: 'pointer' }}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {loading && shows.length === 0 && <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}><Spinner /></div>}
-            {error && <ErrorBox message={error} />}
-
-            {!error && (shows.length > 0 || !loading) && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
-                <p style={{ font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
-                  {isSearching
-                    ? <>Resultados para <span style={{ color: '#d4d4d8', fontWeight: 600 }}>"{query}"</span> · pesquisa global</>
-                    : <>Top <span style={{ color: '#d4d4d8', fontWeight: 600 }}>{platform}</span> · disponível em Portugal · por popularidade</>
-                  }
-                </p>
-                {shows.map((show, i) => <ShowCard key={show.id} show={show} index={i} onSelect={setSelectedShow} onAdd={handleAdd} owned={isOwned(show.name)} />)}
-                {shows.length === 0 && !loading && (
-                  <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                    <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73' }}>
-                      {isSearching ? `Nenhum resultado para "${query}"` : `Nenhum resultado para ${platform}`}
+            {/* ── Shows results ── */}
+            {searchMode === 'shows' && (
+              <>
+                {loading && shows.length === 0 && <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}><Spinner /></div>}
+                {error && <ErrorBox message={error} />}
+                {!error && (shows.length > 0 || !loading) && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                    <p style={{ font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
+                      {isSearching
+                        ? <>Resultados para <span style={{ color: '#d4d4d8', fontWeight: 600 }}>"{query}"</span> · pesquisa global</>
+                        : <>Top <span style={{ color: '#d4d4d8', fontWeight: 600 }}>{platform}</span> · disponível em Portugal · por popularidade</>
+                      }
                     </p>
+                    {shows.map((show, i) => <ShowCard key={show.id} show={show} index={i} onSelect={setSelectedShow} onAdd={handleAdd} owned={isOwned(show.name)} />)}
+                    {shows.length === 0 && !loading && (
+                      <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                        <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73' }}>
+                          {isSearching ? `Nenhum resultado para "${query}"` : `Nenhum resultado para ${platform}`}
+                        </p>
+                      </div>
+                    )}
+                    {hasMore && (
+                      <button onClick={loadMore} disabled={loading} style={{ width: '100%', background: '#16161b', border: '1px solid #26262e', color: '#b4b4bd', font: "600 13px 'Hanken Grotesk'", padding: '12px', borderRadius: 12, cursor: loading ? 'default' : 'pointer', marginTop: 4, opacity: loading ? 0.5 : 1 }}>
+                        {loading ? 'A carregar...' : 'Carregar mais'}
+                      </button>
+                    )}
                   </div>
                 )}
-                {hasMore && (
-                  <button onClick={loadMore} disabled={loading} style={{ width: '100%', background: '#16161b', border: '1px solid #26262e', color: '#b4b4bd', font: "600 13px 'Hanken Grotesk'", padding: '12px', borderRadius: 12, cursor: loading ? 'default' : 'pointer', marginTop: 4, opacity: loading ? 0.5 : 1 }}>
-                    {loading ? 'A carregar...' : 'Carregar mais'}
-                  </button>
+              </>
+            )}
+
+            {/* ── People results ── */}
+            {searchMode === 'people' && !personView && (
+              <>
+                {personSearch.loading && <div style={{ display: 'flex', justifyContent: 'center', padding: '64px 0' }}><Spinner /></div>}
+                {personSearch.error && <ErrorBox message={personSearch.error} />}
+                {!personSearch.loading && personSearch.persons.length === 0 && query.trim() && (
+                  <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                    <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73' }}>Nenhuma pessoa encontrada para "{query}"</p>
+                  </div>
+                )}
+                {personSearch.persons.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <p style={{ font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
+                      Pessoas · <span style={{ color: '#d4d4d8', fontWeight: 600 }}>"{query}"</span>
+                    </p>
+                    {personSearch.persons.map(p => <PersonCard key={p.id} person={p} onSelect={handleSelectPerson} />)}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── Person TV credits ── */}
+            {searchMode === 'people' && personView && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setPersonView(null)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#b4b4bd', font: "600 13px 'Hanken Grotesk'", cursor: 'pointer', padding: 0, alignSelf: 'flex-start' }}
+                >
+                  ← {personView.person.name}
+                </button>
+                {personView.loadingShows && <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}><Spinner /></div>}
+                {!personView.loadingShows && personView.shows.length === 0 && (
+                  <p style={{ font: "500 14px 'Hanken Grotesk'", color: '#6b6b73', textAlign: 'center', padding: '48px 0' }}>Sem créditos em séries de TV.</p>
+                )}
+                {!personView.loadingShows && personView.shows.length > 0 && (
+                  <>
+                    <p style={{ font: "500 12px 'Hanken Grotesk'", color: '#6b6b73' }}>
+                      Séries com <span style={{ color: '#d4d4d8', fontWeight: 600 }}>{personView.person.name}</span>
+                    </p>
+                    {personView.shows.map(show => <ShowCard key={show.id} show={show} onSelect={setSelectedShow} onAdd={handleAdd} owned={isOwned(show.name)} />)}
+                  </>
                 )}
               </div>
             )}
