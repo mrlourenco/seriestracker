@@ -62,6 +62,10 @@ export default function SeriesDetail() {
     <Layout>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '20px 16px 20px' }}>
 
+        <button type="button" onClick={() => navigate(-1)} className="btn-secondary" style={{ alignSelf: 'flex-start', padding: '6px 14px' }}>
+          ← Voltar
+        </button>
+
         {/* Header: poster + title/meta */}
         <div style={{ display: 'flex', gap: 16 }}>
           <div style={{ flexShrink: 0, width: 90, height: 134, borderRadius: 14, overflow: 'hidden', background: '#1e1e26', position: 'relative' }}>
