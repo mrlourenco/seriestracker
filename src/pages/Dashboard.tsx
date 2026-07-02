@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import UpcomingEpisodes from '../components/UpcomingEpisodes'
 import Spinner from '../components/Spinner'
@@ -38,6 +38,7 @@ type ViewMode = string
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth()
   const { sharedWithMe } = useShares()
+  const navigate = useNavigate()
   const [filter, setFilter] = useState<SeriesStatus>('watching')
   const [viewMode, setViewMode] = useState<ViewMode>('own')
 
@@ -111,6 +112,29 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
+      {/* Top Séries shortcut */}
+      <div style={{ padding: '14px 18px 0' }}>
+        <button
+          type="button"
+          onClick={() => navigate('/top')}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 16px', borderRadius: 14,
+            background: 'linear-gradient(135deg, #1a1a22, #131318)',
+            border: '1px solid #2a2a35', cursor: 'pointer',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 20 }}>🏆</span>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5' }}>Top Séries</div>
+              <div style={{ font: "500 11px 'Hanken Grotesk'", color: '#6b6b73', marginTop: 1 }}>Ranking por avaliação</div>
+            </div>
+          </div>
+          <span style={{ font: "600 14px 'Hanken Grotesk'", color: '#E11D2A' }}>→</span>
+        </button>
+      </div>
 
       {/* Filter pills */}
       <div className="noscroll" style={{ display: 'flex', gap: 8, padding: '16px 18px 4px', overflowX: 'auto' }}>

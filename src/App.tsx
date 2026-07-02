@@ -7,11 +7,13 @@ import SeriesDetail from './pages/SeriesDetail'
 import AddEditSeries from './pages/AddEditSeries'
 import Shares from './pages/Shares'
 import Discover from './pages/Discover'
+import Top from './pages/Top'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/top" element={<ProtectedRoute><Top /></ProtectedRoute>} />
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/series" element={<ProtectedRoute><SeriesList /></ProtectedRoute>} />
       <Route path="/series/new" element={<ProtectedRoute><AddEditSeries /></ProtectedRoute>} />
