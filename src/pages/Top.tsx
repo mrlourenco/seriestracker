@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
@@ -6,7 +6,9 @@ import { seriesGradient } from '../lib/gradients'
 import { useSeries } from '../hooks/useSeries'
 import { useAuth } from '../hooks/useAuth'
 import { STATUS_LABELS, PLATFORMS } from '../types'
-import type { SeriesStatus, Platform } from '../types'
+import type { Series, SeriesStatus, Platform } from '../types'
+import { resolveTMDBShowDetail } from '../hooks/useTMDBDetail'
+import { supabase } from '../lib/supabase'
 
 const STATUS_OPTIONS: { key: SeriesStatus | 'all'; label: string }[] = [
   { key: 'all',          label: 'Todas' },
@@ -22,12 +24,49 @@ export default function Top() {
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<SeriesStatus | 'all'>('all')
   const [platformFilter, setPlatformFilter] = useState<Platform | 'all'>('all')
+  const [genreFilter, setGenreFilter] = useState<string | 'all'>('all')
+  const [extraGenres, setExtraGenres] = useState<Map<string, string[]>>(new Map())
+  const backfillStarted = useRef(false)
 
   const { series, loading } = useSeries({ userId: user?.id ?? null })
+
+  const getGenres = (s: Series): string[] =>
+    s.genres?.length ? s.genres : (extraGenres.get(s.id) ?? [])
+
+  useEffect(() => {
+    if (loading || backfillStarted.current) return
+    const missing = series.filter(s => !s.genres?.length)
+    if (!missing.length) return
+    backfillStarted.current = true
+
+    const BATCH = 5
+    let i = 0
+    async function runBatch() {
+      const batch = missing.slice(i, i + BATCH)
+      if (!batch.length) return
+      i += BATCH
+      await Promise.all(batch.map(async s => {
+        try {
+          const detail = await resolveTMDBShowDetail(s.title, undefined, s.tmdb_id, s.poster_url)
+          const genres = detail?.genres?.map(g => g.name) ?? []
+          if (!genres.length) return
+          setExtraGenres(prev => new Map(prev).set(s.id, genres))
+          await supabase.from('series').update({ genres }).eq('id', s.id)
+        } catch { /* silently skip */ }
+      }))
+      setTimeout(runBatch, 300)
+    }
+    runBatch()
+  }, [loading, series])
+
+  const allGenres = Array.from(
+    new Set(series.flatMap(s => getGenres(s)))
+  ).sort()
 
   const filtered = series
     .filter(s => statusFilter === 'all' || s.status === statusFilter)
     .filter(s => platformFilter === 'all' || s.platform === platformFilter)
+    .filter(s => genreFilter === 'all' || getGenres(s).includes(genreFilter))
     .sort((a, b) => {
       if (a.rating !== null && b.rating !== null) return b.rating - a.rating
       if (a.rating !== null) return -1
@@ -109,6 +148,45 @@ export default function Top() {
               </button>
             ))}
           </div>
+
+          {/* Genre filter */}
+          {allGenres.length > 0 && (
+            <div className="noscroll" style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+              <button
+                type="button"
+                onClick={() => setGenreFilter('all')}
+                style={{
+                  flexShrink: 0,
+                  background: genreFilter === 'all' ? '#1d4ed8' : '#16161b',
+                  color:      genreFilter === 'all' ? '#fff'    : '#b4b4bd',
+                  font: "600 12px 'Hanken Grotesk'",
+                  padding: '6px 13px', borderRadius: 999,
+                  border: genreFilter === 'all' ? 'none' : '1px solid #26262e',
+                  cursor: 'pointer',
+                }}
+              >
+                Todos os géneros
+              </button>
+              {allGenres.map(g => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setGenreFilter(g)}
+                  style={{
+                    flexShrink: 0,
+                    background: genreFilter === g ? '#1d4ed8' : '#16161b',
+                    color:      genreFilter === g ? '#fff'    : '#b4b4bd',
+                    font: "600 12px 'Hanken Grotesk'",
+                    padding: '6px 13px', borderRadius: 999,
+                    border: genreFilter === g ? 'none' : '1px solid #26262e',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -121,38 +199,42 @@ export default function Top() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {rated.map((s, i) => (
-              <Link
-                key={s.id}
-                to={`/series/${s.id}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 13px', borderRadius: 15, background: '#131318', border: '1px solid #20202a', textDecoration: 'none' }}
-              >
-                <span style={{ width: 28, flexShrink: 0, font: "800 15px 'Hanken Grotesk'", color: i < 3 ? '#E11D2A' : '#4a4a55', textAlign: 'center' }}>
-                  #{i + 1}
-                </span>
-                <div style={{ flexShrink: 0, width: 42, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
-                  {s.poster_url ? (
-                    <img src={s.poster_url} alt={s.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s.title) }} />
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {s.title}
-                  </div>
-                  <div style={{ font: "500 12px 'Hanken Grotesk'", color: '#8a8a95', marginTop: 3 }}>
-                    {[s.platform, STATUS_LABELS[s.status]].filter(Boolean).join(' · ')}
-                  </div>
-                </div>
-                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-                  <span style={{ font: "800 18px 'Hanken Grotesk'", color: '#fbbf24', lineHeight: 1 }}>
-                    {s.rating}
+            {rated.map((s, i) => {
+              const genres = getGenres(s).slice(0, 2)
+              const subtitle = [s.platform, genres.length ? genres.join(', ') : STATUS_LABELS[s.status]].filter(Boolean).join(' · ')
+              return (
+                <Link
+                  key={s.id}
+                  to={`/series/${s.id}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 13px', borderRadius: 15, background: '#131318', border: '1px solid #20202a', textDecoration: 'none' }}
+                >
+                  <span style={{ width: 28, flexShrink: 0, font: "800 15px 'Hanken Grotesk'", color: i < 3 ? '#E11D2A' : '#4a4a55', textAlign: 'center' }}>
+                    #{i + 1}
                   </span>
-                  <span style={{ font: "500 10px 'Hanken Grotesk'", color: '#6b6b73' }}>/10</span>
-                </div>
-              </Link>
-            ))}
+                  <div style={{ flexShrink: 0, width: 42, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                    {s.poster_url ? (
+                      <img src={s.poster_url} alt={s.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s.title) }} />
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {s.title}
+                    </div>
+                    <div style={{ font: "500 12px 'Hanken Grotesk'", color: '#8a8a95', marginTop: 3 }}>
+                      {subtitle}
+                    </div>
+                  </div>
+                  <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                    <span style={{ font: "800 18px 'Hanken Grotesk'", color: '#fbbf24', lineHeight: 1 }}>
+                      {s.rating}
+                    </span>
+                    <span style={{ font: "500 10px 'Hanken Grotesk'", color: '#6b6b73' }}>/10</span>
+                  </div>
+                </Link>
+              )
+            })}
 
             {unrated.length > 0 && (
               <>
@@ -161,30 +243,34 @@ export default function Top() {
                     Sem avaliação
                   </p>
                 )}
-                {unrated.map(s => (
-                  <Link
-                    key={s.id}
-                    to={`/series/${s.id}`}
-                    style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 13px', borderRadius: 15, background: '#131318', border: '1px solid #20202a', textDecoration: 'none', opacity: 0.6 }}
-                  >
-                    <span style={{ width: 28, flexShrink: 0, font: "600 13px 'Hanken Grotesk'", color: '#4a4a55', textAlign: 'center' }}>—</span>
-                    <div style={{ flexShrink: 0, width: 42, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
-                      {s.poster_url ? (
-                        <img src={s.poster_url} alt={s.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s.title) }} />
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {s.title}
+                {unrated.map(s => {
+                  const genres = getGenres(s).slice(0, 2)
+                  const subtitle = [s.platform, genres.length ? genres.join(', ') : STATUS_LABELS[s.status]].filter(Boolean).join(' · ')
+                  return (
+                    <Link
+                      key={s.id}
+                      to={`/series/${s.id}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '11px 13px', borderRadius: 15, background: '#131318', border: '1px solid #20202a', textDecoration: 'none', opacity: 0.6 }}
+                    >
+                      <span style={{ width: 28, flexShrink: 0, font: "600 13px 'Hanken Grotesk'", color: '#4a4a55', textAlign: 'center' }}>—</span>
+                      <div style={{ flexShrink: 0, width: 42, height: 60, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                        {s.poster_url ? (
+                          <img src={s.poster_url} alt={s.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ position: 'absolute', inset: 0, background: seriesGradient(s.title) }} />
+                        )}
                       </div>
-                      <div style={{ font: "500 12px 'Hanken Grotesk'", color: '#8a8a95', marginTop: 3 }}>
-                        {[s.platform, STATUS_LABELS[s.status]].filter(Boolean).join(' · ')}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ font: "700 14px 'Hanken Grotesk'", color: '#f3f3f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {s.title}
+                        </div>
+                        <div style={{ font: "500 12px 'Hanken Grotesk'", color: '#8a8a95', marginTop: 3 }}>
+                          {subtitle}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  )
+                })}
               </>
             )}
           </div>

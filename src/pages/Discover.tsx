@@ -191,6 +191,7 @@ export default function Discover() {
       current_episode: null,
       rating: null,
       notes: null,
+      genres: null,
       next_episode_date: null,
       next_episode_season: null,
       next_episode_number: null,

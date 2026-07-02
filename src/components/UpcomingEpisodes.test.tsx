@@ -9,6 +9,7 @@ const base: Series = {
   poster_url: null,
   status: 'watching',
   platform: 'Netflix',
+  genres: null,
   current_season: 1,
   current_episode: 1,
   rating: null,
@@ -88,7 +89,6 @@ describe('UpcomingEpisodes', () => {
       makeSeries({ id: String(i), title: `Show ${i}`, next_episode_date: `2026-07-${String(i + 1).padStart(2, '0')}` })
     )
     render(<UpcomingEpisodes series={series} />)
-    // The heading is also one text node, so we query the cards specifically
     expect(screen.getAllByText(/^Show \d+$/).length).toBe(10)
   })
 

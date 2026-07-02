@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import SeriesForm from '../components/SeriesForm'
 import Spinner from '../components/Spinner'
 import { useSeries } from '../hooks/useSeries'
+import { resolveTMDBShowDetail } from '../hooks/useTMDBDetail'
 import type { Series, SeriesInsert } from '../types'
 
 export default function AddEditSeries() {
@@ -30,11 +31,19 @@ export default function AddEditSeries() {
   }, [id])
 
   const handleSubmit = async (data: SeriesInsert) => {
+    let genres = data.genres
+    if (!genres?.length) {
+      try {
+        const detail = await resolveTMDBShowDetail(data.title, undefined, data.tmdb_id, data.poster_url)
+        genres = detail?.genres?.map(g => g.name) ?? null
+      } catch { /* continue without genres */ }
+    }
+    const payload = { ...data, genres }
     if (isEdit && id) {
-      await updateSeries(id, data)
+      await updateSeries(id, payload)
       navigate(`/series/${id}`, { replace: true })
     } else {
-      await addSeries(data)
+      await addSeries(payload)
       navigate('/series', { replace: true })
     }
   }

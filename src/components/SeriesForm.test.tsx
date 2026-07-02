@@ -13,6 +13,7 @@ const existingSeries: Series = {
   poster_url: 'https://example.com/poster.jpg',
   status: 'watching',
   platform: 'Netflix',
+  genres: null,
   current_season: 3,
   current_episode: 6,
   rating: 10,
@@ -61,8 +62,6 @@ describe('SeriesForm', () => {
 
   describe('validation', () => {
     it('shows a Portuguese required-title error when form is submitted without a title', () => {
-      // Use fireEvent.submit to bypass jsdom's native HTML5 required-field validation
-      // so React's handleSubmit runs and sets the error state.
       const { container } = render(<SeriesForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />)
       fireEvent.submit(container.querySelector('form')!)
       expect(screen.getByText('O título é obrigatório')).toBeInTheDocument()
