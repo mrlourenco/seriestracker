@@ -97,15 +97,22 @@ export default function TMDBSeriesInfo({ title, fallbackPosterUrl, tmdbId }: Pro
               <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Elenco principal</p>
               <div className="space-y-2">
                 {cast.map(person => (
-                  <div key={person.id} className="flex items-center gap-3">
+                  <a
+                    key={person.id}
+                    href={`https://www.themoviedb.org/person/${person.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 hover:bg-slate-800/50 rounded-lg px-1 -mx-1 transition-colors"
+                  >
                     <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden flex-shrink-0">
                       {person.profile_path && <img src={tmdbImage(person.profile_path, 'w185') ?? ''} alt={person.name} className="w-full h-full object-cover" />}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm text-slate-200 truncate">{person.name}</p>
                       <p className="text-xs text-slate-500 truncate">{person.character}</p>
                     </div>
-                  </div>
+                    <span className="text-xs text-brand-400 flex-shrink-0">↗</span>
+                  </a>
                 ))}
               </div>
             </div>
