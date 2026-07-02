@@ -48,15 +48,10 @@ export default function TMDBSeriesInfo({ title, fallbackPosterUrl, tmdbId }: Pro
   if (!loading && !detail && !fallbackPosterUrl) return null
 
   const posterUrl = tmdbImage(detail?.poster_path, 'w500') ?? fallbackPosterUrl
-  const backdropUrl = tmdbImage(detail?.backdrop_path, 'w780')
   const cast = detail?.credits?.cast?.slice(0, 5) ?? []
 
   return (
     <div className="card space-y-4 overflow-hidden">
-      {backdropUrl && (
-        <img src={backdropUrl} alt="" className="-mx-4 -mt-4 w-[calc(100%+2rem)] max-w-none h-36 object-cover opacity-80" />
-      )}
-
       {posterUrl && (
         <img src={posterUrl} alt={title} className="w-[72%] max-w-xs max-h-[520px] mx-auto object-contain rounded-xl bg-slate-900" />
       )}
