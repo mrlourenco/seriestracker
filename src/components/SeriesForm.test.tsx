@@ -13,6 +13,7 @@ const existingSeries: Series = {
   poster_url: 'https://example.com/poster.jpg',
   status: 'watching',
   platform: 'Netflix',
+  genres: null,
   current_season: 3,
   current_episode: 6,
   rating: 10,
