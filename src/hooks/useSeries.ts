@@ -79,8 +79,6 @@ export function useSeries(filters: Filters = {}) {
   }
 
   const updateSeries = async (id: string, data: SeriesUpdate) => {
-    // Strip columns that only exist after optional migrations so that edits
-    // work regardless of which schema version the user's DB is on.
     const safeData = withoutColumns(data as SeriesInsert, 'tmdb_id')
     const { error } = await supabase.from('series').update(safeData).eq('id', id)
     if (error) throw pgError(error)

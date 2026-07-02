@@ -10,6 +10,7 @@ const base: Series = {
   poster_url: null,
   status: 'watching',
   platform: 'Netflix',
+  genres: null,
   current_season: 3,
   current_episode: 6,
   rating: 10,

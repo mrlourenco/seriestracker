@@ -9,6 +9,7 @@ export interface Series {
   tmdb_id?: number | null
   status: SeriesStatus
   platform: Platform | null
+  genres: string[] | null
   current_season: number | null
   current_episode: number | null
   rating: number | null
