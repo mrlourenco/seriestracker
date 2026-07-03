@@ -148,11 +148,13 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
                   key={n}
                   type="button"
                   aria-pressed={form.rating === n}
-                  aria-label={`${n}`}
+                  aria-label={`${n} ${n === 1 ? 'estrela' : 'estrelas'}`}
                   onClick={() => set('rating', form.rating === n ? null : n)}
                   style={{
+                    // 3px lateral keeps 10 stars within a 360px viewport;
+                    // wider padding would overflow the row
                     background: 'none', border: 'none', cursor: 'pointer',
-                    padding: '4px 1px', fontSize: 24, lineHeight: 1,
+                    padding: '8px 3px', fontSize: 24, lineHeight: 1,
                     color: filled ? '#fbbf24' : '#33333c',
                     textShadow: filled ? '0 0 12px rgba(251,191,36,.35)' : 'none',
                     transition: 'color .15s',
@@ -171,7 +173,14 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
               <button
                 type="button"
                 onClick={() => set('rating', null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', font: "600 12px 'Hanken Grotesk'", color: '#6b6b73', padding: 2, textDecoration: 'underline' }}
+                style={{
+                  // Positive padding + equal negative margin enlarges the tap
+                  // area without shifting the visual layout
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  font: "600 12px 'Hanken Grotesk'", color: '#6b6b73',
+                  padding: '8px 12px', margin: '-8px -12px',
+                  textDecoration: 'underline',
+                }}
               >
                 Limpar
               </button>

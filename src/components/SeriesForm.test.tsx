@@ -50,7 +50,7 @@ describe('SeriesForm', () => {
       render(<SeriesForm initial={existingSeries} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />)
       expect(screen.getByDisplayValue('Breaking Bad')).toBeInTheDocument()
       expect(screen.getByDisplayValue('Netflix')).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: '10', pressed: true })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '10 estrelas', pressed: true })).toBeInTheDocument()
       expect(screen.getByDisplayValue('Best show ever')).toBeInTheDocument()
     })
 
@@ -124,8 +124,8 @@ describe('SeriesForm', () => {
       const user = userEvent.setup()
       render(<SeriesForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />)
       await user.type(screen.getByPlaceholderText('Nome da série'), 'The Wire')
-      await user.click(screen.getByRole('button', { name: '8' }))
-      expect(screen.getByRole('button', { name: '8', pressed: true })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: '8 estrelas' }))
+      expect(screen.getByRole('button', { name: '8 estrelas', pressed: true })).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Guardar' }))
       await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledWith(
         expect.objectContaining({ rating: 8 })
@@ -135,7 +135,7 @@ describe('SeriesForm', () => {
     it('clears the rating when the selected button is clicked again', async () => {
       const user = userEvent.setup()
       render(<SeriesForm initial={existingSeries} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />)
-      await user.click(screen.getByRole('button', { name: '10', pressed: true }))
+      await user.click(screen.getByRole('button', { name: '10 estrelas', pressed: true }))
       expect(screen.queryByRole('button', { pressed: true })).not.toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Guardar' }))
       await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledWith(
