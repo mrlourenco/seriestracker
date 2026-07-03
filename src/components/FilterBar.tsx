@@ -1,3 +1,4 @@
+import Pill from './Pill'
 import type { SeriesStatus, Platform } from '../types'
 import { STATUS_LABELS, PLATFORMS, STATUSES } from '../types'
 
@@ -26,36 +27,11 @@ export default function FilterBar({ status, platform, search, onStatusChange, on
         }}
       />
       <div className="noscroll" style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
-        <button
-          onClick={() => onStatusChange('')}
-          style={{
-            flexShrink: 0,
-            background: status === '' ? '#E11D2A' : '#16161b',
-            color:      status === '' ? '#fff'    : '#b4b4bd',
-            font: "600 12px 'Hanken Grotesk'",
-            padding: '7px 14px', borderRadius: 999,
-            border: status === '' ? 'none' : '1px solid #26262e',
-            cursor: 'pointer',
-          }}
-        >
-          Todos
-        </button>
+        <Pill active={status === ''} size="sm" onClick={() => onStatusChange('')}>Todos</Pill>
         {STATUSES.map(s => (
-          <button
-            key={s}
-            onClick={() => onStatusChange(s)}
-            style={{
-              flexShrink: 0,
-              background: status === s ? '#E11D2A' : '#16161b',
-              color:      status === s ? '#fff'    : '#b4b4bd',
-              font: "600 12px 'Hanken Grotesk'",
-              padding: '7px 14px', borderRadius: 999,
-              border: status === s ? 'none' : '1px solid #26262e',
-              cursor: 'pointer',
-            }}
-          >
+          <Pill key={s} active={status === s} size="sm" onClick={() => onStatusChange(s)}>
             {STATUS_LABELS[s]}
-          </button>
+          </Pill>
         ))}
       </div>
       <select

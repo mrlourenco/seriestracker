@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
+import Pill from '../components/Pill'
 import UpcomingEpisodes from '../components/UpcomingEpisodes'
 import Spinner from '../components/Spinner'
 import { seriesGradient } from '../lib/gradients'
@@ -65,50 +66,12 @@ export default function Dashboard() {
       {/* Shares view switcher */}
       {sharedWithMe.length > 0 && (
         <div className="noscroll" style={{ display: 'flex', gap: 8, padding: '14px 18px 0', overflowX: 'auto' }}>
-          <button
-            onClick={() => setViewMode('own')}
-            style={{
-              flexShrink: 0,
-              background: isOwnDashboard ? '#E11D2A' : '#16161b',
-              color: isOwnDashboard ? '#fff' : '#b4b4bd',
-              font: "600 12px 'Hanken Grotesk'",
-              padding: '6px 13px', borderRadius: 999,
-              border: isOwnDashboard ? 'none' : '1px solid #26262e',
-              cursor: 'pointer',
-            }}
-          >
-            O meu
-          </button>
-          <button
-            onClick={() => setViewMode('all')}
-            style={{
-              flexShrink: 0,
-              background: isAllMode ? '#E11D2A' : '#16161b',
-              color: isAllMode ? '#fff' : '#b4b4bd',
-              font: "600 12px 'Hanken Grotesk'",
-              padding: '6px 13px', borderRadius: 999,
-              border: isAllMode ? 'none' : '1px solid #26262e',
-              cursor: 'pointer',
-            }}
-          >
-            Todos
-          </button>
+          <Pill active={isOwnDashboard} size="sm" onClick={() => setViewMode('own')}>O meu</Pill>
+          <Pill active={isAllMode} size="sm" onClick={() => setViewMode('all')}>Todos</Pill>
           {sharedWithMe.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setViewMode(s.owner_id)}
-              style={{
-                flexShrink: 0,
-                background: viewMode === s.owner_id ? '#E11D2A' : '#16161b',
-                color: viewMode === s.owner_id ? '#fff' : '#b4b4bd',
-                font: "600 12px 'Hanken Grotesk'",
-                padding: '6px 13px', borderRadius: 999,
-                border: viewMode === s.owner_id ? 'none' : '1px solid #26262e',
-                cursor: 'pointer',
-              }}
-            >
+            <Pill key={s.id} active={viewMode === s.owner_id} size="sm" onClick={() => setViewMode(s.owner_id)}>
               {s.owner.display_name ?? s.owner.email?.split('@')[0]}
-            </button>
+            </Pill>
           ))}
         </div>
       )}
@@ -139,22 +102,9 @@ export default function Dashboard() {
       {/* Filter pills */}
       <div className="noscroll" style={{ display: 'flex', gap: 8, padding: '16px 18px 4px', overflowX: 'auto' }}>
         {PILLS.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key)}
-            style={{
-              flexShrink: 0,
-              background: filter === key ? '#E11D2A' : '#16161b',
-              color:      filter === key ? '#fff'    : '#b4b4bd',
-              font: "600 13px 'Hanken Grotesk'",
-              padding: '8px 15px',
-              borderRadius: 999,
-              border: filter === key ? 'none' : '1px solid #26262e',
-              cursor: 'pointer',
-            }}
-          >
+          <Pill key={key} active={filter === key} onClick={() => setFilter(key)}>
             {label}
-          </button>
+          </Pill>
         ))}
       </div>
 
