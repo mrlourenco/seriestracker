@@ -139,7 +139,12 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
 
       <div>
         <label style={labelStyle}>Nota (1–10)</label>
-        <input className="input" type="number" min={1} max={10} value={form.rating ?? ''} onChange={e => set('rating', e.target.value ? Number(e.target.value) : null)} />
+        <select className="input" value={form.rating ?? ''} onChange={e => set('rating', e.target.value ? Number(e.target.value) : null)}>
+          <option value="">Sem nota</option>
+          {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+            <option key={n} value={n}>{n}</option>
+          ))}
+        </select>
       </div>
 
       <div>
