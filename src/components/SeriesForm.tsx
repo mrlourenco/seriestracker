@@ -138,32 +138,48 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
       </div>
 
       <div>
-        <label style={labelStyle}>Nota (1–10)</label>
-        <div role="group" aria-label="Nota de 1 a 10" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-            <button
-              key={n}
-              type="button"
-              aria-pressed={form.rating === n}
-              onClick={() => set('rating', form.rating === n ? null : n)}
-              style={{
-                width: 38, height: 38, borderRadius: 10,
-                background: form.rating === n ? '#fbbf24' : '#16161b',
-                color: form.rating === n ? '#131318' : '#b4b4bd',
-                font: "700 14px 'Hanken Grotesk'",
-                border: form.rating === n ? 'none' : '1px solid #26262e',
-                cursor: 'pointer',
-              }}
-            >
-              {n}
-            </button>
-          ))}
+        <label style={labelStyle}>Nota</label>
+        <div role="group" aria-label="Nota de 1 a 10" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex' }}>
+            {Array.from({ length: 10 }, (_, i) => i + 1).map(n => {
+              const filled = form.rating !== null && n <= form.rating
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  aria-pressed={form.rating === n}
+                  aria-label={`${n}`}
+                  onClick={() => set('rating', form.rating === n ? null : n)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '4px 1px', fontSize: 24, lineHeight: 1,
+                    color: filled ? '#fbbf24' : '#33333c',
+                    textShadow: filled ? '0 0 12px rgba(251,191,36,.35)' : 'none',
+                    transition: 'color .15s',
+                  }}
+                >
+                  ★
+                </button>
+              )
+            })}
+          </div>
+          {form.rating !== null ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ font: "800 16px 'Hanken Grotesk'", color: '#fbbf24' }}>
+                {form.rating}<span style={{ font: "600 11px 'Hanken Grotesk'", color: '#6b6b73' }}>/10</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => set('rating', null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', font: "600 12px 'Hanken Grotesk'", color: '#6b6b73', padding: 2, textDecoration: 'underline' }}
+              >
+                Limpar
+              </button>
+            </div>
+          ) : (
+            <span style={{ font: "500 12px 'Hanken Grotesk'", color: '#4a4a55' }}>Sem nota</span>
+          )}
         </div>
-        {form.rating !== null && (
-          <p style={{ font: "500 11px 'Hanken Grotesk'", color: '#6b6b73', marginTop: 6 }}>
-            Toca outra vez no {form.rating} para limpar
-          </p>
-        )}
       </div>
 
       <div>
