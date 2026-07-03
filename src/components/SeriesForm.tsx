@@ -139,7 +139,7 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
 
       <div>
         <label style={labelStyle}>Nota (1–10)</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <div role="group" aria-label="Nota de 1 a 10" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
             <button
               key={n}

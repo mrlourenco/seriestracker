@@ -5,7 +5,15 @@ import { readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
-const gitHash = execSync('git rev-parse --short HEAD').toString().trim()
+
+// Fall back to a timestamp when git isn't available (zip deploy, bare Docker
+// context) so the build still succeeds and the SW cache name stays unique.
+let gitHash: string
+try {
+  gitHash = execSync('git rev-parse --short HEAD').toString().trim()
+} catch {
+  gitHash = Date.now().toString(36)
+}
 
 // Stamps the service worker cache name with the git hash so each deploy
 // invalidates the previous cache without manual version bumps.

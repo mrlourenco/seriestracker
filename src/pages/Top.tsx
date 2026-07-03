@@ -48,15 +48,26 @@ export default function Top() {
       const batch = missing.slice(i, i + BATCH)
       if (!batch.length || cancelled) return
       i += BATCH
-      await Promise.all(batch.map(async s => {
+      const results = await Promise.all(batch.map(async s => {
         try {
           const detail = await resolveTMDBShowDetail(s.title, undefined, s.tmdb_id, s.poster_url)
           const genres = detail?.genres?.map(g => g.name) ?? []
-          if (!genres.length || cancelled) return
-          setExtraGenres(prev => new Map(prev).set(s.id, genres))
-          await supabase.from('series').update({ genres }).eq('id', s.id)
-        } catch { /* silently skip */ }
+          return genres.length ? { id: s.id, genres } : null
+        } catch { return null }
       }))
+      if (cancelled) return
+      const found = results.filter((r): r is { id: string; genres: string[] } => r !== null)
+      if (found.length) {
+        // One state update per batch instead of one per series
+        setExtraGenres(prev => {
+          const next = new Map(prev)
+          for (const r of found) next.set(r.id, r.genres)
+          return next
+        })
+        await Promise.all(found.map(r =>
+          supabase.from('series').update({ genres: r.genres }).eq('id', r.id)
+        ))
+      }
       if (!cancelled) timer = setTimeout(runBatch, 300)
     }
     runBatch()

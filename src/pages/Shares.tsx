@@ -4,7 +4,7 @@ import Spinner from '../components/Spinner'
 import { useShares } from '../hooks/useShares'
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <p style={{ font: "700 15px 'Hanken Grotesk'", color: '#d4d4d8' }}>{children}</p>
+  <h2 style={{ font: "700 15px 'Hanken Grotesk'", color: '#d4d4d8', margin: 0 }}>{children}</h2>
 )
 
 export default function Shares() {
