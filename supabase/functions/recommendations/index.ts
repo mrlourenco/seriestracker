@@ -29,7 +29,7 @@ serve(async (req) => {
 ${list}
 
 Recomenda 6 séries NOVAS que este utilizador possa gostar. Regras obrigatórias:
-- NÃO recomandes nenhuma série que já esteja na lista acima, independentemente do status.
+- NÃO recomendes nenhuma série que já esteja na lista acima, independentemente do status.
 ${genreConstraint}
 - Se não houver séries suficientes para inferir gostos, recomenda séries de grande qualidade reconhecidas.
 
