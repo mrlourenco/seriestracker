@@ -111,13 +111,13 @@ describe('useSeries', () => {
       expect(result.current.series).toEqual([])
     })
 
-    it('uses fallback error message when error is not an Error instance', async () => {
+    it('stringifies non-Error failures into the error message', async () => {
       vi.mocked(supabase.from).mockReturnValue(
         createChain({ data: null, error: 'some string error' })
       )
       const { result } = renderHook(() => useSeries({ userId: 'user-1' }))
       await waitFor(() => expect(result.current.loading).toBe(false))
-      expect(result.current.error).toBe('Erro ao carregar séries')
+      expect(result.current.error).toBe('some string error')
     })
   })
 

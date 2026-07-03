@@ -35,7 +35,7 @@ export function useSeries(filters: Filters = {}) {
 
   const userIdsKey = filters.userIds?.join(',')
 
-  const fetchSeries = useCallback(async () => {
+  const fetchSeries = useCallback(async (signal?: AbortSignal) => {
     // Auth not ready: userIds empty (all-mode waiting) or userId null (single-mode waiting)
     if (filters.userIds !== undefined) {
       if (filters.userIds.length === 0) return
@@ -54,18 +54,25 @@ export function useSeries(filters: Filters = {}) {
       if (filters.status) query = query.eq('status', filters.status)
       if (filters.platform) query = query.eq('platform', filters.platform)
       if (filters.search) query = query.ilike('title', `%${filters.search}%`)
-      const { data, error } = await query
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
+      if (signal?.aborted) return
       if (error) throw pgError(error)
       setSeries(data ?? [])
+      setLoading(false)
     } catch (err) {
+      // A newer fetch superseded this one; leave its state alone
+      if (signal?.aborted) return
       setError(err instanceof Error ? err.message : 'Erro ao carregar séries')
-    } finally {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.userId, filters.status, filters.platform, filters.search, userIdsKey])
 
-  useEffect(() => { fetchSeries() }, [fetchSeries])
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchSeries(controller.signal)
+    return () => controller.abort()
+  }, [fetchSeries])
 
   const addSeries = async (data: SeriesInsert) => {
     const { data: { user } } = await supabase.auth.getUser()

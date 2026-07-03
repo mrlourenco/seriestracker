@@ -150,7 +150,7 @@ export function useTMDB(platform: Platform, query = '') {
       setShows([])
       setTotalPages(1)
     }
-  })
+  }, [key])
 
   useEffect(() => {
     const apiKey = getTMDBApiKey()

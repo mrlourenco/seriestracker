@@ -139,7 +139,31 @@ export default function SeriesForm({ initial, onSubmit, onCancel }: Props) {
 
       <div>
         <label style={labelStyle}>Nota (1–10)</label>
-        <input className="input" type="number" min={1} max={10} value={form.rating ?? ''} onChange={e => set('rating', e.target.value ? Number(e.target.value) : null)} />
+        <div role="group" aria-label="Nota de 1 a 10" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+            <button
+              key={n}
+              type="button"
+              aria-pressed={form.rating === n}
+              onClick={() => set('rating', form.rating === n ? null : n)}
+              style={{
+                width: 38, height: 38, borderRadius: 10,
+                background: form.rating === n ? '#fbbf24' : '#16161b',
+                color: form.rating === n ? '#131318' : '#b4b4bd',
+                font: "700 14px 'Hanken Grotesk'",
+                border: form.rating === n ? 'none' : '1px solid #26262e',
+                cursor: 'pointer',
+              }}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        {form.rating !== null && (
+          <p style={{ font: "500 11px 'Hanken Grotesk'", color: '#6b6b73', marginTop: 6 }}>
+            Toca outra vez no {form.rating} para limpar
+          </p>
+        )}
       </div>
 
       <div>

@@ -22,11 +22,10 @@ describe('ProtectedRoute', () => {
       signInWithGitHub: vi.fn(),
       signOut: vi.fn(),
     })
-    const { container } = renderWithRouter(
+    renderWithRouter(
       <ProtectedRoute><div>Protected content</div></ProtectedRoute>
     )
-    // Spinner: a div with animate-spin class; no protected content
-    expect(container.querySelector('.animate-spin')).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'A carregar' })).toBeInTheDocument()
     expect(screen.queryByText('Protected content')).not.toBeInTheDocument()
   })
 

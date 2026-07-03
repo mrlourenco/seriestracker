@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout'
+import Pill from '../components/Pill'
 import Spinner from '../components/Spinner'
 import { seriesGradient } from '../lib/gradients'
 import { useSeries } from '../hooks/useSeries'
@@ -41,22 +42,36 @@ export default function Top() {
 
     const BATCH = 5
     let i = 0
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
     async function runBatch() {
       const batch = missing.slice(i, i + BATCH)
-      if (!batch.length) return
+      if (!batch.length || cancelled) return
       i += BATCH
-      await Promise.all(batch.map(async s => {
+      const results = await Promise.all(batch.map(async s => {
         try {
           const detail = await resolveTMDBShowDetail(s.title, undefined, s.tmdb_id, s.poster_url)
           const genres = detail?.genres?.map(g => g.name) ?? []
-          if (!genres.length) return
-          setExtraGenres(prev => new Map(prev).set(s.id, genres))
-          await supabase.from('series').update({ genres }).eq('id', s.id)
-        } catch { /* silently skip */ }
+          return genres.length ? { id: s.id, genres } : null
+        } catch { return null }
       }))
-      setTimeout(runBatch, 300)
+      if (cancelled) return
+      const found = results.filter((r): r is { id: string; genres: string[] } => r !== null)
+      if (found.length) {
+        // One state update per batch instead of one per series
+        setExtraGenres(prev => {
+          const next = new Map(prev)
+          for (const r of found) next.set(r.id, r.genres)
+          return next
+        })
+        await Promise.all(found.map(r =>
+          supabase.from('series').update({ genres: r.genres }).eq('id', r.id)
+        ))
+      }
+      if (!cancelled) timer = setTimeout(runBatch, 300)
     }
     runBatch()
+    return () => { cancelled = true; clearTimeout(timer) }
   }, [loading, series])
 
   const allGenres = Array.from(
@@ -93,97 +108,34 @@ export default function Top() {
           {/* Status filter */}
           <div className="noscroll" style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
             {STATUS_OPTIONS.map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setStatusFilter(key)}
-                style={{
-                  flexShrink: 0,
-                  background: statusFilter === key ? '#E11D2A' : '#16161b',
-                  color:      statusFilter === key ? '#fff'    : '#b4b4bd',
-                  font: "600 13px 'Hanken Grotesk'",
-                  padding: '7px 14px', borderRadius: 999,
-                  border: statusFilter === key ? 'none' : '1px solid #26262e',
-                  cursor: 'pointer',
-                }}
-              >
+              <Pill key={key} active={statusFilter === key} onClick={() => setStatusFilter(key)}>
                 {label}
-              </button>
+              </Pill>
             ))}
           </div>
 
           {/* Platform filter */}
           <div className="noscroll" style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
-            <button
-              type="button"
-              onClick={() => setPlatformFilter('all')}
-              style={{
-                flexShrink: 0,
-                background: platformFilter === 'all' ? '#3f3f46' : '#16161b',
-                color:      platformFilter === 'all' ? '#fff'    : '#b4b4bd',
-                font: "600 12px 'Hanken Grotesk'",
-                padding: '6px 13px', borderRadius: 999,
-                border: platformFilter === 'all' ? 'none' : '1px solid #26262e',
-                cursor: 'pointer',
-              }}
-            >
+            <Pill active={platformFilter === 'all'} activeBg="#3f3f46" size="sm" onClick={() => setPlatformFilter('all')}>
               Todas as plataformas
-            </button>
+            </Pill>
             {PLATFORMS.map(p => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPlatformFilter(p)}
-                style={{
-                  flexShrink: 0,
-                  background: platformFilter === p ? '#3f3f46' : '#16161b',
-                  color:      platformFilter === p ? '#fff'    : '#b4b4bd',
-                  font: "600 12px 'Hanken Grotesk'",
-                  padding: '6px 13px', borderRadius: 999,
-                  border: platformFilter === p ? 'none' : '1px solid #26262e',
-                  cursor: 'pointer',
-                }}
-              >
+              <Pill key={p} active={platformFilter === p} activeBg="#3f3f46" size="sm" onClick={() => setPlatformFilter(p)}>
                 {p}
-              </button>
+              </Pill>
             ))}
           </div>
 
           {/* Genre filter */}
           {allGenres.length > 0 && (
             <div className="noscroll" style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
-              <button
-                type="button"
-                onClick={() => setGenreFilter('all')}
-                style={{
-                  flexShrink: 0,
-                  background: genreFilter === 'all' ? '#1d4ed8' : '#16161b',
-                  color:      genreFilter === 'all' ? '#fff'    : '#b4b4bd',
-                  font: "600 12px 'Hanken Grotesk'",
-                  padding: '6px 13px', borderRadius: 999,
-                  border: genreFilter === 'all' ? 'none' : '1px solid #26262e',
-                  cursor: 'pointer',
-                }}
-              >
+              <Pill active={genreFilter === 'all'} activeBg="#1d4ed8" size="sm" onClick={() => setGenreFilter('all')}>
                 Todos os géneros
-              </button>
+              </Pill>
               {allGenres.map(g => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => setGenreFilter(g)}
-                  style={{
-                    flexShrink: 0,
-                    background: genreFilter === g ? '#1d4ed8' : '#16161b',
-                    color:      genreFilter === g ? '#fff'    : '#b4b4bd',
-                    font: "600 12px 'Hanken Grotesk'",
-                    padding: '6px 13px', borderRadius: 999,
-                    border: genreFilter === g ? 'none' : '1px solid #26262e',
-                    cursor: 'pointer',
-                  }}
-                >
+                <Pill key={g} active={genreFilter === g} activeBg="#1d4ed8" size="sm" onClick={() => setGenreFilter(g)}>
                   {g}
-                </button>
+                </Pill>
               ))}
             </div>
           )}

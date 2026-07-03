@@ -3,6 +3,10 @@ import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
 import { useShares } from '../hooks/useShares'
 
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <h2 style={{ font: "700 15px 'Hanken Grotesk'", color: '#d4d4d8', margin: 0 }}>{children}</h2>
+)
+
 export default function Shares() {
   const { myShares, sharedWithMe, loading, addShare, removeShare } = useShares()
   const [email, setEmail] = useState('')
@@ -28,10 +32,6 @@ export default function Shares() {
     if (!confirm('Remover esta partilha?')) return
     await removeShare(id)
   }
-
-  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-    <p style={{ font: "700 15px 'Hanken Grotesk'", color: '#d4d4d8' }}>{children}</p>
-  )
 
   return (
     <Layout>

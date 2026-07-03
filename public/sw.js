@@ -1,4 +1,6 @@
-const CACHE_NAME = 'seriestracker-v5'
+// The BUILD_ID placeholder is stamped with the git hash at build time (see
+// vite.config.ts), so every deploy gets a fresh cache without manual bumps.
+const CACHE_NAME = 'seriestracker-__BUILD_ID__'
 const STATIC_ASSETS = [
   '/seriestracker/',
   '/seriestracker/icon-192.png',
