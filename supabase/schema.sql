@@ -8,7 +8,7 @@ create table if not exists public.series (
   title         text not null,
   poster_url    text,
   status        text not null check (status in ('watching','completed','want_to_watch','dropped','archived')),
-  platform      text check (platform in ('Netflix','Max','Disney+','Prime','Apple TV','Outra')),
+  platform      text check (platform in ('Netflix','Max','Disney+','Prime','Apple TV','SkyShowtime','Star','Outra')),
   current_season  integer check (current_season >= 1),
   current_episode integer check (current_episode >= 1),
   rating        integer check (rating >= 1 and rating <= 10),
