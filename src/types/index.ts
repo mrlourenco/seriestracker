@@ -1,5 +1,5 @@
 export type SeriesStatus = 'watching' | 'completed' | 'want_to_watch' | 'dropped' | 'archived'
-export type Platform = 'Netflix' | 'Max' | 'Disney+' | 'Prime' | 'Apple TV' | 'Outra'
+export type Platform = 'Netflix' | 'Max' | 'Disney+' | 'Prime' | 'Apple TV' | 'SkyShowtime' | 'Star' | 'Outra'
 
 export interface Series {
   id: string
@@ -51,5 +51,5 @@ export const STATUS_LABELS: Record<SeriesStatus, string> = {
 }
 
 
-export const PLATFORMS: Platform[] = ['Netflix', 'Max', 'Disney+', 'Prime', 'Apple TV', 'Outra']
+export const PLATFORMS: Platform[] = ['Netflix', 'Max', 'Disney+', 'Prime', 'Apple TV', 'SkyShowtime', 'Star', 'Outra']
 export const STATUSES: SeriesStatus[] = ['watching', 'completed', 'want_to_watch', 'dropped', 'archived']
